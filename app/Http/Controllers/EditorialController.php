@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Editorial;
+use App\Models\Users;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 
@@ -64,7 +65,11 @@ return redirect()->route('editoriales.index')->with(array(
      */
     public function edit(string $id)
     {
-        //
+//Abre el formulario que permita editar un registro
+   $editorial = Editorial::findOrFail($id);
+   return view('editorial.edit', array(
+       'editorial' => $editorial
+   ));
     }
 
     /**
@@ -72,8 +77,22 @@ return redirect()->route('editoriales.index')->with(array(
      */
     public function update(Request $request, string $id)
     {
-        //
-    }
+   //Guarda la información del formulario de edición
+   $this->validate($request, [
+       'name' => 'required|min:5',
+       'address' => 'required',
+       'email' => 'required'
+   ]);
+   $editorial = Editorial::findOrFail($id);
+   $editorial->name =  $request->input('name');
+   $editorial->address = $request->input('address');
+   $editorial->email = $request->input('email');
+   $editorial->save();
+   return redirect()->route('editoriales.index')->with(array(
+       'message' => 'La editorial se ha actualizado correctamente'
+   ));
+}
+
 
     /**
      * Remove the specified resource from storage.
