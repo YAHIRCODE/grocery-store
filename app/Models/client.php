@@ -14,8 +14,7 @@ class client extends Model
         'email',
         'street_1',
         'street_2',
-        'neighborhood',
-        'zip_code'
+        'neighborhood'
     ];
 
      public function sales()
