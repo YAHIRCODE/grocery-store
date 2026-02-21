@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Sale;
 use App\Models\Product;
-use Iluminate\Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
@@ -40,6 +40,7 @@ class SaleController extends Controller
         ]);
         // inicio de la trasaccion
         DB::beginTransaction();
+         $employee_id = auth()->user()->id;
         try{
             $product = Product::findOrFail($request->product_id);
             //analisis de progreso
@@ -52,7 +53,7 @@ class SaleController extends Controller
             'product_id' => $request->product_id,
             'quantity' => $request->quantity,
             'total_price' => $total,
-            'user_id' => auth()->id(),
+            'employee_id' => auth()->Employee()->id,
         ]);
         // restar el stock del producto
         $product->decrement('stock', $request->quantity);
@@ -76,6 +77,8 @@ class SaleController extends Controller
     public function show(string $id)
     {
         //
+        $sale = Sale::findOrFail($id);
+        return view('sales.show', compact('sale'));
     }
 
     /**
@@ -84,6 +87,9 @@ class SaleController extends Controller
     public function edit(string $id)
     {
         //
+        $sale = Sale::findOrFail($id);
+        $products = Product::all();
+        return view('sales.edit', compact('sale', 'products'));
     }
 
     /**
@@ -92,6 +98,14 @@ class SaleController extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $sale = Sale::findOrFail($id);
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'total_price' => 'required|numeric|min:0.01',
+        ]);
+        $sale->update($request->all());
+        return redirect()->route('sales.index')->with('success', 'Venta actualizada exitosamente');
     }
 
     /**
@@ -99,6 +113,8 @@ class SaleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $sale = Sale::findOrFail($id);
+        $sale->delete();
+        return redirect()->route('sales.index')->with('success', 'Venta eliminada exitosamente');
     }
 }
