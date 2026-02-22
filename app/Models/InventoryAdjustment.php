@@ -4,28 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SaleDetail extends Model
+class InventoryAdjustment extends Model
 {
     protected $fillable = [
-        'sale_id',
         'product_id',
         'quantity',
-        'unit_price',
-        'total_price',
+        'adjustment_type', // 'addition' o 'subtraction'
+        'reason',
+        'adjustment_date',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'adjustment_date' => 'date',
     ];
 
     // Relaciones
-    public function sale()
-    {
-        return $this->belongsTo(Sale::class);
-    }
-
     public function product()
     {
         return $this->belongsTo(Product::class);

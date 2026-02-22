@@ -6,22 +6,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class Supplier extends Model
 {
-    //
     protected $fillable = [
         'company_name',
         'contact_name',
         'phone',
-        'email'
+        'email',
     ];
-    // estas son las relaciones que tendran 
-    public function products() // un proveedor puede tener muchos productos
+
+    // Relaciones
+    public function products()
     {
         return $this->hasMany(Product::class);
     }
 
     public function debts()
     {
-        // Un proveedor tiene muchas deudas
         return $this->hasMany(SupplierDebt::class);
+    }
+
+    // Método auxiliar
+    public function getTotalDebt()
+    {
+        return $this->debts()->whereIn('status', ['pending', 'overdue'])->sum('amount');
     }
 }

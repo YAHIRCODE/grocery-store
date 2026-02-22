@@ -5,31 +5,44 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class SupplierDebt extends Model
+class ClientDebt extends Model
 {
     protected $fillable = [
-        'supplier_id',
+        'client_id',
+        'sale_id',
         'start_date',
         'due_date',
-        'amount',
+        'balance_due',
         'status',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'due_date' => 'date',
-        'amount' => 'decimal:2',
+        'balance_due' => 'decimal:2',
     ];
 
     // Relaciones
-    public function supplier()
+    public function client()
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Client::class);
+    }
+
+    public function sale()
+    {
+        return $this->belongsTo(Sale::class);
     }
 
     // Métodos auxiliares
     public function isOverdue()
     {
         return $this->status === 'pending' && $this->due_date < Carbon::today();
+    }
+
+    public function markAsOverdue()
+    {
+        if ($this->isOverdue()) {
+            $this->update(['status' => 'overdue']);
+        }
     }
 }

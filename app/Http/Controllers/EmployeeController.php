@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use APP\Models\employee;
+use App\Models\Employee;
+use App\Models\User;
+use App\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -12,8 +15,7 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        //
-        $employees = employee::with('role')->get();
+        $employees = Employee::with('role')->get();
         return view('employees.index', compact('employees'));
     }
 
@@ -22,8 +24,8 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        //
-        return view('employees.create');
+        $roles = Role::all();
+        return view('employees.create', compact('roles'));
     }
 
     /**
@@ -31,39 +33,52 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
+        $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:employees,email',
             'phone' => 'required|string|max:20',
             'full_address' => 'required|string|max:255',
-            'payroll_id' => 'required|string|max:255',
-            'hourly_rate' => 'required|numeric',
+            'payroll_id' => 'required|string|max:255|unique:employees,payroll_id',
+            'hourly_rate' => 'required|numeric|min:0.01',
             'card_number' => 'required|string|max:255',
             'role_id' => 'required|exists:roles,id',
         ]);
-        $user = \App\Models\User::create([
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
-            'password' => bcrypt('password'), // contraseña por defecto, se recomienda cambiarla después
-        ]);
 
-        \App\Models\Employee::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'full_address' => $request->full_address,
-            'payroll_id' => $request->payroll_id,
-            'hourly_rate' => $request->hourly_rate,
-            'card_number' => $request->card_number,
-            'role_id' => $request->role_id,
-            'user_id' => $user->id, // asociar el empleado con el usuario creado
-        ]);
-        employee::create($request->all());// este se trae todos los datos de los request y los guarda en la base de datos, siempre y cuando el modelo tenga el fillable con los campos correctos
-        return redirect()->route('employees.index')->with('success', 'Empleado creado exitosamente');
-        //este solo retorna una vista y no hace nada con los datos, por eso es importante validar los datos antes de crear el registro en la base de datos
+        DB::beginTransaction();
+        try {
+            // Crear usuario asociado
+            $user = User::create([
+                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => bcrypt('password'), // Contraseña por defecto
+            ]);
+
+            // Crear empleado
+            Employee::create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'full_address' => $validated['full_address'],
+                'payroll_id' => $validated['payroll_id'],
+                'hourly_rate' => $validated['hourly_rate'],
+                'card_number' => $validated['card_number'],
+                'role_id' => $validated['role_id'],
+                'user_id' => $user->id,
+            ]);
+
+            DB::commit();
+            return redirect()
+                ->route('employees.index')
+                ->with('success', 'Empleado creado exitosamente');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Error al crear empleado: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -71,40 +86,18 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $employee = Employee::with('role')->findOrFail($id);
+        return view('employees.show', compact('employee'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request, string $id)
+    public function edit(string $id)
     {
-        //
-        $employee = employee::findOrFail($id);
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees,email,' . $id,
-            'phone' => 'required|string|max:20',
-            'full_address' => 'required|string|max:255',
-            'payroll_id' => 'required|string|max:255',
-            'hourly_rate' => 'required|numeric',
-            'card_number' => 'required|string|max:255',
-            'role_id' => 'required|exists:roles,id',
-        ]);
-        //este va a crear el registro de forma manual, pero es importante validar los datos antes de crear el registro en la base de datos
-        employee::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'full_address' => $request->full_address,
-            'payroll_id' => $request->payroll_id,
-            'hourly_rate' => $request->hourly_rate,
-            'card_number' => $request->card_number,
-            'role_id' => $request->role_id,
-        ]);
-        return view('employees.edit', compact('employee'));
+        $employee = Employee::findOrFail($id);
+        $roles = Role::all();
+        return view('employees.edit', compact('employee', 'roles'));
     }
 
     /**
@@ -112,10 +105,25 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-        $employee = employee::findOrFail($id);
-        $employee->update($request->all());
-        return redirect()->route('employees.index')->with('success', 'Empleado actualizado exitosamente');
+        $employee = Employee::findOrFail($id);
+        
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:employees,email,' . $id,
+            'phone' => 'required|string|max:20',
+            'full_address' => 'required|string|max:255',
+            'payroll_id' => 'required|string|max:255|unique:employees,payroll_id,' . $id,
+            'hourly_rate' => 'required|numeric|min:0.01',
+            'card_number' => 'required|string|max:255',
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        $employee->update($validated);
+        
+        return redirect()
+            ->route('employees.index')
+            ->with('success', 'Empleado actualizado exitosamente');
     }
 
     /**
@@ -123,9 +131,17 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $employee = employee::findOrFail($id);
+        $employee = Employee::findOrFail($id);
+        
+        // Opcional: Eliminar también el usuario asociado
+        if ($employee->user_id) {
+            User::find($employee->user_id)?->delete();
+        }
+        
         $employee->delete();
-        return redirect()->route('employees.index')->with('success', 'Empleado eliminado exitosamente');
+        
+        return redirect()
+            ->route('employees.index')
+            ->with('success', 'Empleado eliminado exitosamente');
     }
 }

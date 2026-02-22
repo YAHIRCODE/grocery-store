@@ -6,20 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    //
     protected $fillable = [
         'category_id',
         'supplier_id',
         'name',
+        'description',
         'barcode',
-        'price',
-        'barcode',
-        'current_stock',
+        'stock', // Cambiado de current_stock para consistencia
         'min_stock',
         'purchase_price',
-        'retail_price'
+        'price', // retail_price (para consistencia con controllers)
     ];
 
+    protected $casts = [
+        'stock' => 'integer',
+        'min_stock' => 'integer',
+        'purchase_price' => 'decimal:2',
+        'price' => 'decimal:2',
+    ];
+
+    // Relaciones
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -35,4 +41,24 @@ class Product extends Model
         return $this->hasMany(SaleDetail::class);
     }
 
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function inventoryAdjustments()
+    {
+        return $this->hasMany(InventoryAdjustment::class);
+    }
+
+    // Métodos auxiliares
+    public function isLowStock()
+    {
+        return $this->stock <= $this->min_stock;
+    }
+
+    public function hasStock($quantity = 1)
+    {
+        return $this->stock >= $quantity;
+    }
 }

@@ -1,30 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\client;
-use App\Models\Client_debt;
+
+use App\Models\Client;
+use App\Models\ClientDebt;
 use Illuminate\Http\Request;
 
 class ClientDebtController extends Controller
 {
-
-
-public function validateClientDebt(Request $request)
-    {
-        $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'amount' => 'required|numeric|min:0.01',
-            'due_date' => 'required|date|after:today',
-        ]);
-    }
     /**
      * Display a listing of the resource.
      */
-    
     public function index()
     {
-        //
-        $debts = Client_debt::with('client')->get();
+        $debts = ClientDebt::with('client')->orderBy('due_date', 'asc')->get();
         return view('client_debts.index', compact('debts'));
     }
 
@@ -33,8 +22,7 @@ public function validateClientDebt(Request $request)
      */
     public function create()
     {
-        //
-        $clients = client::all();
+        $clients = Client::all();
         return view('client_debts.create', compact('clients'));
     }
 
@@ -43,17 +31,20 @@ public function validateClientDebt(Request $request)
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
+        $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'sale_id'=>'nullable|exists:sales,id',
+            'sale_id' => 'nullable|exists:sales,id',
             'start_date' => 'required|date',
-            'due_date' => 'required|date|after:today',
+            'due_date' => 'required|date|after:start_date',
             'balance_due' => 'required|numeric|min:0.01',
             'status' => 'required|in:pending,paid,overdue',
         ]);
-        Client_debt::create($request->all());// este va a a ttraer todos los datos del request y los va a guardar en la base de datos, siempre y cuando el modelo tenga el fillable con los campos correctos
-        return redirect()->route('client_debts.index')->with('success', 'Deuda del cliente creada exitosamente');
+
+        ClientDebt::create($validated);
+        
+        return redirect()
+            ->route('client_debts.index')
+            ->with('success', 'Deuda del cliente creada exitosamente');
     }
 
     /**
@@ -61,7 +52,8 @@ public function validateClientDebt(Request $request)
      */
     public function show(string $id)
     {
-        //
+        $debt = ClientDebt::with('client')->findOrFail($id);
+        return view('client_debts.show', compact('debt'));
     }
 
     /**
@@ -69,9 +61,8 @@ public function validateClientDebt(Request $request)
      */
     public function edit(string $id)
     {
-        //
-        $debt = Client_debt::findOrFail($id);
-        $clients = client::all();
+        $debt = ClientDebt::findOrFail($id);
+        $clients = Client::all();
         return view('client_debts.edit', compact('debt', 'clients'));
     }
 
@@ -80,18 +71,22 @@ public function validateClientDebt(Request $request)
      */
     public function update(Request $request, string $id)
     {
-        //
-        $debt = Client_debt::findOrFail($id);
-        $request->validate([
+        $debt = ClientDebt::findOrFail($id);
+        
+        $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'sale_id'=>'nullable|exists:sales,id',
+            'sale_id' => 'nullable|exists:sales,id',
             'start_date' => 'required|date',
-            'due_date' => 'required|date|after:today',
+            'due_date' => 'required|date|after:start_date',
             'balance_due' => 'required|numeric|min:0.01',
             'status' => 'required|in:pending,paid,overdue',
         ]);
-        $debt->update($request->all());
-        return redirect()->route('client_debts.index')->with('success', 'Deuda del cliente actualizada exitosamente');
+
+        $debt->update($validated);
+        
+        return redirect()
+            ->route('client_debts.index')
+            ->with('success', 'Deuda del cliente actualizada exitosamente');
     }
 
     /**
@@ -99,12 +94,19 @@ public function validateClientDebt(Request $request)
      */
     public function destroy(string $id)
     {
-        //
-        $debt = Client_debt::findOrFail($id);
-        if ($debt->status == 'pendiente'){
-            return redirect()->back()->with('error', 'No se puede eliminar una deuda pendiente. Por favor, actualice el estado a pagada o vencida antes de eliminar.');         
+        $debt = ClientDebt::findOrFail($id);
+        
+        // No permitir eliminar deudas pendientes
+        if (in_array($debt->status, ['pending', 'overdue'])) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar una deuda pendiente o vencida. Por favor, actualice el estado a pagada antes de eliminar.');
         }
+        
         $debt->delete();
-        return redirect()->route('client_debts.index')->with('success', 'Deuda del cliente eliminada exitosamente');
+        
+        return redirect()
+            ->route('client_debts.index')
+            ->with('success', 'Deuda del cliente eliminada exitosamente');
     }
 }

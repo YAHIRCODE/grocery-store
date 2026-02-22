@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -11,7 +12,8 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        //
+        $categories = Category::withCount('products')->orderBy('name', 'asc')->get();
+        return view('categories.index', compact('categories'));
     }
 
     /**
@@ -19,7 +21,7 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        //
+        return view('categories.create');
     }
 
     /**
@@ -27,7 +29,16 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        Category::create($validated);
+        
+        return redirect()
+            ->route('categories.index')
+            ->with('success', 'Categoría creada exitosamente');
     }
 
     /**
@@ -35,7 +46,8 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $category = Category::with('products')->findOrFail($id);
+        return view('categories.show', compact('category'));
     }
 
     /**
@@ -43,7 +55,8 @@ class CategoryController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $category = Category::findOrFail($id);
+        return view('categories.edit', compact('category'));
     }
 
     /**
@@ -51,7 +64,18 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $category = Category::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $category->update($validated);
+        
+        return redirect()
+            ->route('categories.index')
+            ->with('success', 'Categoría actualizada exitosamente');
     }
 
     /**
@@ -59,6 +83,19 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $category = Category::findOrFail($id);
+        
+        // Verificar si la categoría tiene productos asociados
+        if ($category->products()->exists()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar la categoría porque tiene productos asociados');
+        }
+        
+        $category->delete();
+        
+        return redirect()
+            ->route('categories.index')
+            ->with('success', 'Categoría eliminada exitosamente');
     }
 }

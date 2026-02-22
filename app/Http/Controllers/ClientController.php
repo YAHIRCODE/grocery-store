@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\client;
+use App\Models\Client;
+
 class ClientController extends Controller
 {
     /**
@@ -11,7 +12,8 @@ class ClientController extends Controller
      */
     public function index()
     {
-        //
+        $clients = Client::orderBy('first_name', 'asc')->get();
+        return view('clients.index', compact('clients'));
     }
 
     /**
@@ -19,7 +21,7 @@ class ClientController extends Controller
      */
     public function create()
     {
-        //
+        return view('clients.create');
     }
 
     /**
@@ -27,18 +29,21 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
+        $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:clients,email',
             'phone' => 'required|string|max:20',
             'street_1' => 'required|string|max:255',
-            'street_2' => 'required|string|max:255',
+            'street_2' => 'nullable|string|max:255',
             'neighborhood' => 'required|string|max:255',
         ]);
-        client::create($request->all());
-        return redirect()->route('clients.index')->with('success', 'Cliente creado exitosamente');
+
+        Client::create($validated);
+        
+        return redirect()
+            ->route('clients.index')
+            ->with('success', 'Cliente creado exitosamente');
     }
 
     /**
@@ -46,8 +51,7 @@ class ClientController extends Controller
      */
     public function show(string $id)
     {
-        //
-        $client = client::findOrFail($id);
+        $client = Client::with('debts')->findOrFail($id);
         return view('clients.show', compact('client'));
     }
 
@@ -56,8 +60,7 @@ class ClientController extends Controller
      */
     public function edit(string $id)
     {
-        //
-        $client = client::findOrFail($id);
+        $client = Client::findOrFail($id);
         return view('clients.edit', compact('client'));
     }
 
@@ -66,19 +69,23 @@ class ClientController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-        $request->validate([
+        $client = Client::findOrFail($id);
+        
+        $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:clients,email,' . $id,
+            'phone' => 'required|string|max:20',
             'street_1' => 'required|string|max:255',
-            'street_2' => 'required|string|max:255',
+            'street_2' => 'nullable|string|max:255',
             'neighborhood' => 'required|string|max:255',
         ]);
-        $client = client::findOrFail($id);
-        $client->update($request->all());
-        return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente');
+
+        $client->update($validated);
+        
+        return redirect()
+            ->route('clients.index')
+            ->with('success', 'Cliente actualizado exitosamente');
     }
 
     /**
@@ -86,9 +93,19 @@ class ClientController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $client = client::findOrFail($id);
+        $client = Client::findOrFail($id);
+        
+        // Verificar si el cliente tiene deudas pendientes
+        if ($client->debts()->whereIn('status', ['pending', 'overdue'])->exists()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar el cliente porque tiene deudas pendientes');
+        }
+        
         $client->delete();
-        return redirect()->route('clients.index')->with('success', 'Cliente eliminado exitosamente');
+        
+        return redirect()
+            ->route('clients.index')
+            ->with('success', 'Cliente eliminado exitosamente');
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
-use App\Models\InventoryAdjustment;
+use App\Models\SupplierDebt;
+use App\Models\Supplier;
 
 class SupplierDebtController extends Controller
 {
@@ -13,9 +13,9 @@ class SupplierDebtController extends Controller
      */
     public function index()
     {
-        //
-        $adjustments = InventoryAdjustment::with('product')->get();
-        return view('supplier_debts.index', compact('adjustments'));
+        // Obtener todas las deudas con su proveedor asociado
+        $debts = SupplierDebt::with('supplier')->get();
+        return view('supplier_debts.index', compact('debts'));
     }
 
     /**
@@ -23,7 +23,8 @@ class SupplierDebtController extends Controller
      */
     public function create()
     {
-        //
+        $suppliers = Supplier::all();
+        return view('supplier_debts.create', compact('suppliers'));
     }
 
     /**
@@ -31,16 +32,21 @@ class SupplierDebtController extends Controller
      */
     public function store(Request $request)
     {
-        //
-       $request->validate([
+        // Validar los datos del formulario
+        $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'amount' => 'required|numeric|min:0',
-            'due_date' => 'required|date' // Fecha en la que debes pagar
+            'start_date' => 'required|date',
+            'due_date' => 'required|date|after:start_date',
+            'amount' => 'required|numeric|min:0.01',
+            'status' => 'required|in:pending,paid,overdue',
         ]);
-        $product = Product::findOrFail($request->product_id);
-        $product->increment('stock', $request->quantity);// se ajusta el stock del producto
-        InventoryAdjustment::create($request->all());
-        return redirect()->route('supplier_debts.index')->with('success', 'Ajuste registrado exitosamente');    
+
+        // Crear la deuda con los datos validados
+        SupplierDebt::create($validated);
+        
+        return redirect()
+            ->route('supplier_debts.index')
+            ->with('success', 'Deuda del proveedor creada exitosamente');
     }
 
     /**
@@ -48,25 +54,18 @@ class SupplierDebtController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $debt = SupplierDebt::with('supplier')->findOrFail($id);
+        return view('supplier_debts.show', compact('debt'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id, $request)
+    public function edit(string $id)
     {
-        //
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'required|string|max:255',
-        ]);
-        $adjustment = InventoryAdjustment::findOrFail($id);
-        $product = Product::findOrFail($request->product_id);
-        $product->decrement('stock', $request->quantity);// se ajusta el stock del producto
-        $adjustment->update($request->all());
-        return redirect()->route('supplier_debts.index')->with('success', 'Ajuste actualizado exitosamente');   
+        $debt = SupplierDebt::findOrFail($id);
+        $suppliers = Supplier::all();
+        return view('supplier_debts.edit', compact('debt', 'suppliers'));
     }
 
     /**
@@ -74,7 +73,23 @@ class SupplierDebtController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $debt = SupplierDebt::findOrFail($id);
+        
+        // Validar los datos del formulario
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'start_date' => 'required|date',
+            'due_date' => 'required|date|after:start_date',
+            'amount' => 'required|numeric|min:0.01',
+            'status' => 'required|in:pending,paid,overdue',
+        ]);
+
+        // Actualizar con datos validados
+        $debt->update($validated);
+        
+        return redirect()
+            ->route('supplier_debts.index')
+            ->with('success', 'Deuda del proveedor actualizada exitosamente');
     }
 
     /**
@@ -82,11 +97,19 @@ class SupplierDebtController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $adjustment = InventoryAdjustment::findOrFail($id);
-        $product = Product::findOrFail($adjustment->product_id);
-        $product->decrement('stock', $adjustment->quantity);// se ajusta el stock del producto
-        $adjustment->delete();
-        return redirect()->route('supplier_debts.index')->with('success', 'Ajuste eliminado exitosamente');
+        $debt = SupplierDebt::findOrFail($id);
+
+        // No permitir eliminar deudas pendientes o vencidas
+        if (in_array($debt->status, ['pending', 'overdue'])) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar una deuda pendiente o vencida.');
+        }
+
+        $debt->delete();
+        
+        return redirect()
+            ->route('supplier_debts.index')
+            ->with('success', 'Deuda del proveedor eliminada exitosamente');
     }
 }

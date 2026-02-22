@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
@@ -11,9 +13,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
-        $products = Product::all();
-        
+        $products = Product::with('category')->orderBy('name', 'asc')->get();
         return view('products.index', compact('products'));
     }
 
@@ -22,10 +22,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //validar los datos del formulario
         $categories = Category::all();
         return view('products.create', compact('categories'));
-       
     }
 
     /**
@@ -33,21 +31,22 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'price' => 'required|numeric',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'price' => 'required|numeric|min:0.01',
+            'stock' => 'nullable|integer|min:0',
             'category_id' => 'required|exists:categories,id',
         ]);
-        // crear el registro de forma manual
-        Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category_id' => $request->category_id,
-        ]);
-        return redirect()->route('products.index')->with('success', 'Producto creado exitosamente');
+
+        // Asegurar que el stock tenga un valor por defecto
+        $validated['stock'] = $validated['stock'] ?? 0;
+
+        Product::create($validated);
+        
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Producto creado exitosamente');
     }
 
     /**
@@ -55,8 +54,8 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        //
-
+        $product = Product::with('category')->findOrFail($id);
+        return view('products.show', compact('product'));
     }
 
     /**
@@ -64,9 +63,8 @@ class ProductController extends Controller
      */
     public function edit(string $id)
     {
-        //
-        $product = Product::findorFail($id);// este busca los productos especificos 
-        $categories = Category::all();//trae todas las categorias
+        $product = Product::findOrFail($id);
+        $categories = Category::all();
         return view('products.edit', compact('product', 'categories'));
     }
 
@@ -75,16 +73,21 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-        $product  = Product::findOrFail($id);
-        $request->validate([
-            'name'=>'required|string|max:255',
-            'description'=>'required|string',
-            'price'=>'required|numeric|min:0',
-            'category_id'=>'required|exists:categories,id'
+        $product = Product::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'price' => 'required|numeric|min:0.01',
+            'stock' => 'nullable|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
         ]);
-        $product->update($request->all());
-        return redirect()->route('products.index')->with('success', 'Producto actualizado exitosamente');
+
+        $product->update($validated);
+        
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Producto actualizado exitosamente');
     }
 
     /**
@@ -92,9 +95,19 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $product  = Product::findOrFail($id);
+        $product = Product::findOrFail($id);
+        
+        // Verificar si el producto tiene ventas asociadas
+        if ($product->sales()->exists()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar el producto porque tiene ventas registradas');
+        }
+        
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Producto eliminado exitosamente');
+        
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Producto eliminado exitosamente');
     }
 }
