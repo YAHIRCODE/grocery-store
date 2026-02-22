@@ -12,16 +12,17 @@ class Sale extends Model
         'client_id',
         'sale_date',
         'payment_method',
-        'total_amount'
+        'total_amount',
+        'employee_id'
     ];
 
     public function employee()
     {
-        return $this->belongsTo(employee::class);
+        return $this->belongsTo(Employee::class);
     }
 
     public function client()
     {
-        return $this->belongsTo(client::class);
+        return $this->belongsTo(Client::class);
     }
 }

@@ -13,6 +13,10 @@ class SupplierDebt extends Model
         'amount',
         'status'
     ];
+    protected $casts = [
+        'due_date' => 'date',
+        'amount' => 'decimal:2'
+    ];
 
     public function supplier()
     {

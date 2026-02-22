@@ -8,7 +8,8 @@ class employee extends Model
 {
     //
     protected $fillable = [
-        'role_id',
+        'user_id',
+        'rol',
         'first_name',
         'last_name',
         'email',
@@ -18,9 +19,9 @@ class employee extends Model
         'hourly_rate',
         'card_number'
     ];
-    public function role()
+    public function user()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(User::class);
     }
 
     public function sales()

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\InventoryAdjustment;
+use App\Models\Product;
 
 class InventoryAdjustmentController extends Controller
 {
@@ -12,6 +14,8 @@ class InventoryAdjustmentController extends Controller
     public function index()
     {
         //
+        $adjustments = InventoryAdjustment::with('product')->get();
+        return view('inventory_adjustments.index', compact('adjustments'));
     }
 
     /**
@@ -28,6 +32,15 @@ class InventoryAdjustmentController extends Controller
     public function store(Request $request)
     {
         //
+         $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'quantity' => 'required|integer|min:1',
+                'reason' => 'required|string|max:255',
+          ]);
+          $product = Product::findOrFail($request->product_id);
+          $product->increment('stock', $request->quantity);// se ajusta el stock del producto
+          InventoryAdjustment::create($request->all());
+          return redirect()->route('inventory_adjustments.index')->with('success', 'Ajuste registrado exitosamente');
     }
 
     /**
@@ -36,6 +49,8 @@ class InventoryAdjustmentController extends Controller
     public function show(string $id)
     {
         //
+        $adjustment = InventoryAdjustment::findOrFail($id);
+        return view('inventory_adjustments.show', compact('adjustment'));
     }
 
     /**
@@ -52,6 +67,16 @@ class InventoryAdjustmentController extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'reason' => 'required|string|max:255',
+        ]);
+        $adjustment = InventoryAdjustment::findOrFail($id);
+        $product = Product::findOrFail($request->product_id);
+        $product->decrement('stock', $request->quantity);// se ajusta el stock del producto
+        $adjustment->update($request->all());
+        return redirect()->route('inventory_adjustments.index')->with('success', 'Ajuste actualizado exitosamente');
     }
 
     /**
@@ -60,5 +85,9 @@ class InventoryAdjustmentController extends Controller
     public function destroy(string $id)
     {
         //
+        $adjustment = InventoryAdjustment::findOrFail($id);
+        $product = Product::findOrFail($adjustment->product_id);
+        $product->decrement('stock', $adjustment->quantity);// se ajusta el stock del producto
+        $adjustment->delete();
     }
 }

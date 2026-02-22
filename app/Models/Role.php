@@ -9,7 +9,8 @@ class Role extends Model
     //
      protected $fillable = [
          'rol_name',
-         'password'
+         'password',
+         'employee_id'
      ];
 
     public function employees()

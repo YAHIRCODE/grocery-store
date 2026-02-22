@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Sale;
 use App\Models\Product;
+use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SaleController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
@@ -36,11 +40,15 @@ class SaleController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
-            'total_price' => 'required|numeric|min:0.01',
         ]);
         // inicio de la trasaccion
         DB::beginTransaction();
-         $employee_id = auth()->user()->id;
+         $employee = auth()->user()->employee; // obtenemos el empleado asociado al usuario autenticado
+         if (!$employee) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'No se encontró el empleado asociado al usuario autenticado');
+        }
+
         try{
             $product = Product::findOrFail($request->product_id);
             //analisis de progreso
@@ -53,12 +61,14 @@ class SaleController extends Controller
             'product_id' => $request->product_id,
             'quantity' => $request->quantity,
             'total_price' => $total,
-            'employee_id' => auth()->Employee()->id,
+            'employee_id' => $employee->id,
         ]);
         // restar el stock del producto
         $product->decrement('stock', $request->quantity);
         DB::commit();
+        Log::info('Venta registrada exitosamente: '.$sale->id);
         return redirect()->route('sales.index')->with('success', 'Venta registrada exitosamente');
+        
         //actualizar el stock del producto
         // $product->update([
         //     'stock' => $product->stock - $request->quantity
@@ -69,6 +79,8 @@ class SaleController extends Controller
             DB::rollBack();// esta desase todo 
             return redirect()->back()->with('error', 'Ocurrió un error al registrar la venta: '.$e->getMessage());
         }
+
+        
     }
 
     /**

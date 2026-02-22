@@ -43,6 +43,24 @@ class EmployeeController extends Controller
             'card_number' => 'required|string|max:255',
             'role_id' => 'required|exists:roles,id',
         ]);
+        $user = \App\Models\User::create([
+            'name' => $request->first_name . ' ' . $request->last_name,
+            'email' => $request->email,
+            'password' => bcrypt('password'), // contraseña por defecto, se recomienda cambiarla después
+        ]);
+
+        \App\Models\Employee::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'full_address' => $request->full_address,
+            'payroll_id' => $request->payroll_id,
+            'hourly_rate' => $request->hourly_rate,
+            'card_number' => $request->card_number,
+            'role_id' => $request->role_id,
+            'user_id' => $user->id, // asociar el empleado con el usuario creado
+        ]);
         employee::create($request->all());// este se trae todos los datos de los request y los guarda en la base de datos, siempre y cuando el modelo tenga el fillable con los campos correctos
         return redirect()->route('employees.index')->with('success', 'Empleado creado exitosamente');
         //este solo retorna una vista y no hace nada con los datos, por eso es importante validar los datos antes de crear el registro en la base de datos

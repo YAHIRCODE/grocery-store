@@ -13,4 +13,15 @@ class Supplier extends Model
         'phone',
         'email'
     ];
+    // estas son las relaciones que tendran 
+    public function products() // un proveedor puede tener muchos productos
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function debts()
+    {
+        // Un proveedor tiene muchas deudas
+        return $this->hasMany(SupplierDebt::class);
+    }
 }

@@ -45,4 +45,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    // app/Models/User.php
+    public function employee()
+    {
+        // Un usuario de login tiene un perfil de empleado con sus datos
+        return $this->hasOne(Employee::class);
+    }
 }
