@@ -14,7 +14,7 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::with('category')->orderBy('name', 'asc')->get();
-        return view('products.index', compact('products'));
+        return view('cajera.products', compact('products'));
     }
 
     /**
@@ -23,7 +23,7 @@ class ProductController extends Controller
     public function create()
     {
         $categories = Category::all();
-        return view('products.create', compact('categories'));
+        return view('cajera.createProduct', compact('categories'));
     }
 
     /**
