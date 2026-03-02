@@ -14,77 +14,122 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PdfController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Rutas Públicas
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Auth::routes();
 
-Route::resource('editoriales', App\Http\Controllers\EditorialController::class)->middleware('auth');
+/*
+|--------------------------------------------------------------------------
+| Rutas Autenticadas con Control de Roles
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route ::resource('editoriales.update', App\Http\Controllers\EditorialController::class)->middleware('auth');
-
-//  Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
     
-//     // ==================== PERFIL DE USUARIO ====================
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // ==================== DASHBOARD ====================
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // ==================== PERFIL ====================
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // ==================== CATEGORÍAS ====================
-    // Acceso: Todos los roles autenticados
-    Route::resource('categories', CategoryController::class);
+    // Ver: Todos
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+    
+    // Crear/Editar: Solo Almacenista y Admin
+    Route::middleware(['role:Almacenista,Administrador'])->group(function () {
+        Route::get('categories/create', [CategoryController::class, 'create'])->name('categories.create');
+        Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::get('categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+        Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    });
     
     // ==================== PRODUCTOS ====================
-    // Acceso: Almacenista y Administrador
-    Route::resource('products', ProductController::class);
+    // Solo Almacenista y Admin
+    Route::middleware(['role:Almacenista,Administrador'])->group(function () {
+        Route::resource('products', ProductController::class);
+    });
     
     // ==================== PROVEEDORES ====================
-    // Acceso: Almacenista y Administrador
-    Route::resource('suppliers', SupplierController::class);
-    
-    // ==================== DEUDAS DE PROVEEDORES ====================
-    // Acceso: Administrador
-    Route::resource('supplier_debts', SupplierDebtController::class);
-    
-    // ==================== CLIENTES ====================
-    // Acceso: Cajero y Administrador
-    Route::resource('clients', ClientController::class);
-    
-    // ==================== DEUDAS DE CLIENTES ====================
-    // Acceso: Cajero y Administrador
-    Route::resource('client_debts', ClientDebtController::class);
-    
-    // ==================== VENTAS ====================
-    // Acceso: Cajero y Administrador
-    Route::resource('sales', SaleController::class);
-    
-    // ==================== EMPLEADOS ====================
-    // Acceso: Solo Administrador
-    Route::resource('employees', EmployeeController::class);
+    // Solo Almacenista y Admin
+    Route::middleware(['role:Almacenista,Administrador'])->group(function () {
+        Route::resource('suppliers', SupplierController::class);
+    });
     
     // ==================== AJUSTES DE INVENTARIO ====================
-    // Acceso: Almacenista y Administrador
-    Route::resource('inventory_adjustments', InventoryAdjustmentController::class)
-        ->only(['index', 'create', 'store', 'show', 'destroy']);
+    // Solo Almacenista y Admin
+    Route::middleware(['role:Almacenista,Administrador'])->group(function () {
+        Route::resource('inventory_adjustments', InventoryAdjustmentController::class)
+            ->only(['index', 'create', 'store', 'show', 'destroy']);
+    });
     
-    // // ==================== GENERACIÓN DE PDFs ====================
-    // Route::prefix('pdf')->name('pdf.')->group(function () {
-    //     // PDF de venta individual
-    //     Route::get('/venta/{id}', [PdfController::class, 'generarVenta'])->name('venta');
+    // ==================== VENTAS ====================
+    // Solo Cajero y Admin
+    Route::middleware(['role:Cajero,Administrador'])->group(function () {
+        Route::resource('sales', SaleController::class);
+    });
+    
+    // ==================== CLIENTES ====================
+    // Solo Cajero y Admin
+    Route::middleware(['role:Cajero,Administrador'])->group(function () {
+        Route::resource('clients', ClientController::class);
+    });
+    
+    // ==================== DEUDAS DE CLIENTES ====================
+    // Solo Cajero y Admin
+    Route::middleware(['role:Cajero,Administrador'])->group(function () {
+        Route::resource('client_debts', ClientDebtController::class);
+    });
+    
+    // ==================== DEUDAS DE PROVEEDORES ====================
+    // Solo Administrador
+    Route::middleware(['role:Administrador'])->group(function () {
+        Route::resource('supplier_debts', SupplierDebtController::class);
+    });
+    
+    // ==================== EMPLEADOS ====================
+    // Solo Administrador
+    Route::middleware(['role:Administrador'])->group(function () {
+        Route::resource('employees', EmployeeController::class);
+    });
+    
+    // ==================== PDFs ====================
+    Route::prefix('pdf')->name('pdf.')->group(function () {
+        // Todos pueden generar PDF de venta
+        Route::get('/venta/{id}', [PdfController::class, 'generarVenta'])->name('venta');
         
-    //     // PDF de reporte de ventas diarias
-    //     Route::get('/ventas-diarias', [PdfController::class, 'reporteVentasDiarias'])->name('ventas.diarias');
+        // Solo Admin para reportes generales
+        Route::middleware(['role:Administrador'])->group(function () {
+            Route::get('/ventas-diarias', [PdfController::class, 'reporteVentasDiarias'])->name('ventas.diarias');
+            Route::get('/inventario', [PdfController::class, 'reporteInventario'])->name('inventario');
+            Route::get('/deudas-clientes', [PdfController::class, 'reporteDeudasClientes'])->name('deudas.clientes');
+            Route::get('/productos-bajo-stock', [PdfController::class, 'reporteProductosBajoStock'])->name('productos.bajo.stock');
+        });
         
-    //     // PDF de reporte de inventario
-    //     Route::get('/inventario', [PdfController::class, 'reporteInventario'])->name('inventario');
-        
-    //     // PDF de deudas de clientes
-    //     Route::get('/deudas-clientes', [PdfController::class, 'reporteDeudasClientes'])->name('deudas.clientes');
-        
-    //     // PDF de cliente específico
-    //     Route::get('/cliente/{id}', [PdfController::class, 'reporteCliente'])->name('cliente');
-        
-    //     // PDF de productos con bajo stock
-    //     Route::get('/productos-bajo-stock', [PdfController::class, 'reporteProductosBajoStock'])->name('productos.bajo.stock');
+        // Cajero y Admin para cliente específico
+        Route::middleware(['role:Cajero,Administrador'])->group(function () {
+            Route::get('/cliente/{id}', [PdfController::class, 'reporteCliente'])->name('cliente');
+        });
+    });
+    
+    // ==================== REPORTES HTML ====================
+    // Solo Administrador
+    Route::middleware(['role:Administrador'])->prefix('reportes')->name('reportes.')->group(function () {
+        Route::get('/ventas', [DashboardController::class, 'reporteVentas'])->name('ventas');
+        Route::get('/productos', [DashboardController::class, 'reporteProductos'])->name('productos');
+        Route::get('/clientes', [DashboardController::class, 'reporteClientes'])->name('clientes');
+        Route::get('/deudas', [DashboardController::class, 'reporteDeudas'])->name('deudas');
+    });
+});
+
