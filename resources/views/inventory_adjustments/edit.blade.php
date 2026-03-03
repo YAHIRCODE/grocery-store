@@ -37,7 +37,7 @@
                                 <label class="form-label small fw-bold text-muted">Producto Asociado</label>
                                 <input type="text" class="form-control bg-light" value="{{ $adjustment->product->name }}" readonly>
                                 <input type="hidden" name="product_id" value="{{ $adjustment->product_id }}">
-                                <small class="text-muted italic">El producto no se puede cambiar para mantener la integridad del stock.</small>
+                                <small class="text-muted"><i>El producto no se puede cambiar para mantener la integridad del stock.</i></small>
                             </div>
 
                             <div class="col-md-6">
@@ -58,7 +58,7 @@
                         <div class="mt-4 p-3 bg-light rounded d-flex align-items-center">
                             <i class="fas fa-exclamation-circle text-warning fs-4 me-3"></i>
                             <p class="small mb-0 text-muted">
-                                <strong>Atención:</strong> Al actualizar, el sistema restará la cantidad anterior del stock y sumará la nueva. Asegúrate de que los valores sean correctos.
+                                <strong>Atención:</strong> Al actualizar, el sistema recalculará el stock basándose en la diferencia entre la cantidad anterior y la nueva.
                             </p>
                         </div>
 

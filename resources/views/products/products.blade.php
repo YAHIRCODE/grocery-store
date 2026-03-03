@@ -15,12 +15,6 @@
         </div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger border-0 shadow-sm mb-4">
-            <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -29,8 +23,10 @@
                         <tr>
                             <th class="ps-4">PRODUCTO</th>
                             <th>CATEGORÍA</th>
-                            <th>PRECIO</th>
-                            <th>EXISTENCIA</th>
+                            <th>P. COMPRA</th>
+                            <th>P. VENTA</th>
+                            <th class="text-success">GANANCIA UNIT.</th>
+                            <th>STOCK</th>
                             <th class="text-end pe-4">ACCIONES</th>
                         </tr>
                     </thead>
@@ -42,24 +38,19 @@
                                     <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary text-center" style="width: 40px;">
                                         <i class="fas fa-box"></i>
                                     </div>
-                                    <div>
-                                        <div class="fw-bold text-dark">{{ $product->name }}</div>
-                                        <small class="text-muted text-truncate d-block" style="max-width: 200px;">{{ $product->description }}</small>
-                                    </div>
+                                    <div class="fw-bold text-dark">{{ $product->name }}</div>
                                 </div>
                             </td>
-                            <td>
-                                <span class="badge bg-light text-dark border px-3">
-                                    {{ $product->category->name ?? 'Sin Categoría' }}
-                                </span>
-                            </td>
+                            <td><span class="badge bg-light text-dark border px-3">{{ $product->category->name ?? 'N/A' }}</span></td>
+                            <td class="text-muted">${{ number_format($product->purchase_price, 2) }}</td>
                             <td class="fw-bold text-dark">${{ number_format($product->price, 2) }}</td>
+                            <td class="fw-bold text-success">
+                                ${{ number_format($product->price - $product->purchase_price, 2) }}
+                            </td>
                             <td>
-                                @if($product->stock <= 5)
-                                    <span class="text-danger fw-bold"><i class="fas fa-arrow-down me-1"></i> {{ $product->stock }}</span>
-                                @else
-                                    <span class="text-success fw-bold">{{ $product->stock }}</span>
-                                @endif
+                                <span class="fw-bold {{ $product->stock <= 5 ? 'text-danger' : 'text-dark' }}">
+                                    {{ $product->stock }}
+                                </span>
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group shadow-sm">
@@ -75,9 +66,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">No hay productos en el inventario.</td>
-                        </tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted">No hay productos registrados.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

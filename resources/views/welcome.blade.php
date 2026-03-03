@@ -143,7 +143,7 @@
                         <h1 class="hero-title">GROCERY <span style="color: var(--accent-color)">STORE</span></h1>
                         
                         <div class="typing-container">
-                            <span class="typing-text">Gestión de inventarios y ventas.</span>
+                            <span class="typing-text">Gestión de inventarios y .</span>
                         </div>
                         
                         <div class="mt-4">

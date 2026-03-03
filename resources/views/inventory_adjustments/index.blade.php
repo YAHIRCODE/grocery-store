@@ -53,8 +53,11 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group shadow-sm">
-                                    <a href="{{ route('inventory_adjustments.show', $adjustment->id) }}" class="btn btn-sm btn-white text-primary">
+                                    <a href="{{ route('inventory_adjustments.show', $adjustment->id) }}" class="btn btn-sm btn-white text-primary" title="Ver detalle">
                                         <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('inventory_adjustments.edit', $adjustment->id) }}" class="btn btn-sm btn-white text-warning" title="Editar ajuste">
+                                        <i class="fas fa-edit"></i>
                                     </a>
                                     <form action="{{ route('inventory_adjustments.destroy', $adjustment->id) }}" method="POST" class="d-inline">
                                         @csrf @method('DELETE')

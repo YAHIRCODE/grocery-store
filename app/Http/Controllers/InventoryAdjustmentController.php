@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\InventoryAdjustment;
 use App\Models\Product;
 
@@ -33,18 +34,36 @@ class InventoryAdjustmentController extends Controller
      */
     public function store(Request $request)
     {
-        //
-         $request->validate([
-                'product_id' => 'required|exists:products,id',
-                'quantity' => 'required|integer|min:1',
-                'reason' => 'required|string|max:255',
-          ]);
-          $product = Product::findOrFail($request->product_id);
-          $product->increment('stock', $request->quantity);// se ajusta el stock del producto
-          InventoryAdjustment::create($request->all());
-          return redirect()->route('inventory_adjustments.index')->with('success', 'Ajuste registrado exitosamente');
-    }
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'adjustment_type' => 'required|in:addition,subtraction',
+            'reason' => 'required|string|max:255',
+        ]);
 
+        $product = Product::findOrFail($request->product_id);
+
+        // Validación extra para mermas/salidas
+        if ($request->adjustment_type === 'subtraction' && $product->stock < $request->quantity) {
+            return back()->withErrors(['quantity' => 'No hay suficiente stock para realizar este ajuste (Stock actual: ' . $product->stock . ')'])->withInput();
+        }
+
+        // Usamos una transacción para asegurar la integridad de los datos
+        DB::transaction(function () use ($request, $product) {
+            // Lógica condicional según el tipo de ajuste
+            if ($request->adjustment_type === 'addition') {
+                $product->increment('stock', $request->quantity);
+            } else {
+                $product->decrement('stock', $request->quantity);
+            }
+
+            // Crear el registro
+            InventoryAdjustment::create($request->all());
+        });
+
+        return redirect()->route('inventory_adjustments.index')
+            ->with('success', 'Ajuste registrado y stock actualizado exitosamente.');
+    }
     /**
      * Display the specified resource.
      */
@@ -79,7 +98,7 @@ class InventoryAdjustmentController extends Controller
         ]);
         $adjustment = InventoryAdjustment::findOrFail($id);
         $product = Product::findOrFail($request->product_id);
-        $product->decrement('stock', $request->quantity);// se ajusta el stock del producto
+        $product->decrement('stock', $request->quantity); // se ajusta el stock del producto
         $adjustment->update($request->all());
         return redirect()->route('inventory_adjustments.index')->with('success', 'Ajuste actualizado exitosamente');
     }
@@ -92,7 +111,7 @@ class InventoryAdjustmentController extends Controller
         //
         $adjustment = InventoryAdjustment::findOrFail($id);
         $product = Product::findOrFail($adjustment->product_id);
-        $product->decrement('stock', $adjustment->quantity);// se ajusta el stock del producto
+        $product->decrement('stock', $adjustment->quantity); // se ajusta el stock del producto
         $adjustment->delete();
     }
 }
