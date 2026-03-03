@@ -24,6 +24,8 @@ class InventoryAdjustmentController extends Controller
     public function create()
     {
         //
+        $products = Product::all();
+        return view('inventory_adjustments.create', compact('products'));
     }
 
     /**
@@ -59,6 +61,9 @@ class InventoryAdjustmentController extends Controller
     public function edit(string $id)
     {
         //
+        $adjustment = InventoryAdjustment::findOrFail($id);
+        $products = Product::all();
+        return view('inventory_adjustments.edit', compact('adjustment', 'products'));
     }
 
     /**

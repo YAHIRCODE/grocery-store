@@ -3,170 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido - Tienda de Abarrotes</title>
+    <title>Bienvenido - Grocery Store</title>
     
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.bunny.net/css?family=Nunito:400,600,700,800" rel="stylesheet">
     
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary-dark: #0f172a;
+            --accent-color: #6366f1; /* Indigo */
+            --highlight-color: #fbbf24; /* Amber para máxima visibilidad */
         }
-        
-        .hero {
-            min-height: 100vh;
+
+        body {
+            background-color: var(--primary-dark);
+            font-family: 'Nunito', sans-serif;
+            color: white;
+            margin: 0;
+        }
+
+        /* Carrusel Fullscreen */
+        .carousel-item {
+            height: 100vh;
+            min-height: 700px;
+            background: no-repeat center center scroll;
+            background-size: cover;
+        }
+
+        .carousel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.7); /* Capa oscura para legibilidad */
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
+            z-index: 2;
         }
-        
-        .hero-content h1 {
-            font-size: 4rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+
+        /* Títulos y Animación */
+        .hero-title {
+            font-size: 5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
         }
-        
-        .hero-content p {
-            font-size: 1.5rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
+
+        /* Subtítulo con color llamativo y animación de cursor */
+        .typing-text {
+            font-size: 1.8rem;
+            color: var(--highlight-color); /* Color ámbar para que no se pierda */
+            font-weight: 700;
+            border-right: 3px solid var(--highlight-color);
+            white-space: nowrap;
+            overflow: hidden;
+            display: inline-block;
+            animation: typing 4s steps(50) infinite, blink 0.5s step-end infinite;
         }
-        
-        .hero-buttons .btn {
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            font-weight: 600;
-            margin: 10px;
-            transition: transform 0.3s;
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
         }
-        
-        .hero-buttons .btn:hover {
-            transform: translateY(-5px);
+
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: var(--highlight-color) }
         }
-        
-        .btn-light {
-            background: white;
-            color: #667eea;
+
+        /* Video Container */
+        .video-box {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.1);
         }
-        
-        .btn-outline-light {
-            border: 2px solid white;
+
+        /* Botón Principal */
+        .btn-main {
+            background: var(--accent-color);
             color: white;
-        }
-        
-        .btn-outline-light:hover {
-            background: white;
-            color: #667eea;
-        }
-        
-        .features {
-            margin-top: 80px;
-        }
-        
-        .feature-box {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            padding: 18px 50px;
             border-radius: 15px;
-            padding: 30px;
-            margin: 15px;
-            transition: transform 0.3s;
+            font-weight: 800;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            border: none;
+            margin-top: 2rem;
         }
-        
-        .feature-box:hover {
+
+        .btn-main:hover {
+            background: #4f46e5;
+            transform: translateY(-5px);
+            color: white;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Sección de Características (Abajo del carrusel) */
+        .features-section {
+            padding: 100px 0;
+            background: #1e293b;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.15);
         }
-        
-        .feature-box i {
+
+        .feature-card i {
             font-size: 3rem;
+            color: var(--accent-color);
             margin-bottom: 20px;
-        }
-        
-        .feature-box h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="mb-4">
-                    <i class="fas fa-shopping-cart" style="font-size: 6rem;"></i>
-                </div>
-                <h1>🛒 Tienda de Abarrotes</h1>
-                <p>Sistema de Gestión Integral para tu Negocio</p>
-                
-                <div class="hero-buttons">
-                    @auth
-                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-lg">
-                            <i class="fas fa-home me-2"></i>
-                            Ir al Dashboard
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="btn btn-light btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>
-                            Iniciar Sesión
-                        </a>
+
+    <div id="homeCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920')"></div>
+            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1920')"></div>
+            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=1920')"></div>
+        </div>
+
+        <div class="carousel-overlay">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-7 text-center text-lg-start">
+                        <h1 class="hero-title">GROCERY <span style="color: var(--accent-color)">STORE</span></h1>
                         
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="btn btn-outline-light btn-lg">
-                                <i class="fas fa-user-plus me-2"></i>
-                                Registrarse
-                            </a>
-                        @endif
-                    @endauth
-                </div>
-            </div>
-            
-            <!-- Características -->
-            <div class="features">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="feature-box">
-                            <i class="fas fa-boxes"></i>
-                            <h3>Inventario</h3>
-                            <p>Control total de tu stock en tiempo real</p>
+                        <div class="typing-container">
+                            <span class="typing-text">Gestión de inventarios y ventas.</span>
+                        </div>
+                        
+                        <div class="mt-4">
+                            @auth
+                                <a href="{{ route('dashboard') }}" class="btn btn-main shadow">
+                                    <i class="fas fa-th-large me-2"></i> IR AL DASHBOARD
+                                </a>
+                            @else
+                                <a href="{{ route('login') }}" class="btn btn-main shadow">
+                                    <i class="fas fa-sign-in-alt me-2"></i> INICIAR SESIÓN
+                                </a>
+                            @endauth
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="feature-box">
-                            <i class="fas fa-cash-register"></i>
-                            <h3>Ventas</h3>
-                            <p>Registro rápido y eficiente de transacciones</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="feature-box">
-                            <i class="fas fa-users"></i>
-                            <h3>Clientes</h3>
-                            <p>Gestión de clientes y créditos</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="feature-box">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>Reportes</h3>
-                            <p>Análisis y reportes detallados</p>
+
+                    <div class="col-lg-5 d-none d-lg-block">
+                        <div class="video-box">
+                            <div class="ratio ratio-16x9">
+                                <iframe src="https://www.youtube.com/watch?v=mfJhMfOPWdE&list=RDgb1uXeEkusE&index=7" title="Video" allowfullscreen></iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Bootstrap JS -->
+
+    <section class="features-section">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-5 display-5">¿Qué ofrecemos?</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <i class="fas fa-boxes"></i>
+                        <h4>Inventario</h4>
+                        <p class="text-white-50 small">Control total de stock y ajustes automatizados.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <i class="fas fa-cash-register"></i>
+                        <h4>Ventas</h4>
+                        <p class="text-white-50 small">Registro rápido de transacciones y cálculo de totales.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <i class="fas fa-users-cog"></i>
+                        <h4>Recursos Humanos</h4>
+                        <p class="text-white-50 small">Gestión de empleados, roles y acceso seguro.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <h4>Finanzas</h4>
+                        <p class="text-white-50 small">Administración de deudas de proveedores y clientes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

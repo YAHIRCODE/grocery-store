@@ -1,190 +1,60 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Producto')
-@section('page-title', 'Editar Producto')
-
 @section('content')
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-edit"></i> Editar Producto: {{ $product->name }}
-                </h5>
-            </div>
-            <div class="card-body">
+<div class="container-fluid">
+    <div class="mb-4 text-muted small">
+        <a href="{{ route('products.index') }}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-1"></i> Cancelar
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded me-3 text-warning">
+                        <i class="fas fa-edit fa-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">Modificar Producto</h4>
+                        <p class="text-muted small mb-0">{{ $product->name }}</p>
+                    </div>
+                </div>
+
                 <form action="{{ route('products.update', $product->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="row">
-                        <!-- Nombre -->
-                        <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label">
-                                Nombre del Producto <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" 
-                                   class="form-control @error('name') is-invalid @enderror" 
-                                   id="name" 
-                                   name="name" 
-                                   value="{{ old('name', $product->name) }}" 
-                                   required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    @csrf @method('PUT')
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Nombre</label>
+                            <input type="text" name="name" class="form-control" value="{{ old('name', $product->name) }}" required>
                         </div>
-                        
-                        <!-- Código de Barras -->
-                        <div class="col-md-6 mb-3">
-                            <label for="barcode" class="form-label">Código de Barras</label>
-                            <input type="text" 
-                                   class="form-control @error('barcode') is-invalid @enderror" 
-                                   id="barcode" 
-                                   name="barcode" 
-                                   value="{{ old('barcode', $product->barcode) }}">
-                            @error('barcode')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    
-                    <!-- Descripción -->
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descripción</label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" 
-                                  id="description" 
-                                  name="description" 
-                                  rows="3">{{ old('description', $product->description) }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Categoría -->
-                        <div class="col-md-6 mb-3">
-                            <label for="category_id" class="form-label">
-                                Categoría <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select @error('category_id') is-invalid @enderror" 
-                                    id="category_id" 
-                                    name="category_id" 
-                                    required>
-                                <option value="">Seleccionar categoría</option>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Categoría</label>
+                            <select name="category_id" class="form-select" required>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" 
-                                            {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
+                                    <option value="{{ $category->id }}" {{ $product->category_id == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('category_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
                         </div>
-                        
-                        <!-- Proveedor -->
-                        <div class="col-md-6 mb-3">
-                            <label for="supplier_id" class="form-label">Proveedor</label>
-                            <select class="form-select @error('supplier_id') is-invalid @enderror" 
-                                    id="supplier_id" 
-                                    name="supplier_id">
-                                <option value="">Sin proveedor</option>
-                                @foreach(\App\Models\Supplier::all() as $supplier)
-                                    <option value="{{ $supplier->id }}" 
-                                            {{ old('supplier_id', $product->supplier_id) == $supplier->id ? 'selected' : '' }}>
-                                        {{ $supplier->company_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('supplier_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Descripción</label>
+                            <textarea name="description" class="form-control" rows="3" required>{{ old('description', $product->description) }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Precio ($)</label>
+                            <input type="number" step="0.01" name="price" class="form-control fw-bold" value="{{ old('price', $product->price) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Existencia Actual</label>
+                            <input type="number" name="stock" class="form-control bg-light" value="{{ old('stock', $product->stock) }}">
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <!-- Precio de Compra -->
-                        <div class="col-md-4 mb-3">
-                            <label for="purchase_price" class="form-label">Precio de Compra</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" 
-                                       class="form-control @error('purchase_price') is-invalid @enderror" 
-                                       id="purchase_price" 
-                                       name="purchase_price" 
-                                       step="0.01" 
-                                       min="0" 
-                                       value="{{ old('purchase_price', $product->purchase_price) }}">
-                                @error('purchase_price')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        
-                        <!-- Precio de Venta -->
-                        <div class="col-md-4 mb-3">
-                            <label for="price" class="form-label">
-                                Precio de Venta <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" 
-                                       class="form-control @error('price') is-invalid @enderror" 
-                                       id="price" 
-                                       name="price" 
-                                       step="0.01" 
-                                       min="0.01" 
-                                       value="{{ old('price', $product->price) }}" 
-                                       required>
-                                @error('price')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        
-                        <!-- Stock Actual -->
-                        <div class="col-md-4 mb-3">
-                            <label for="stock" class="form-label">Stock Actual</label>
-                            <input type="number" 
-                                   class="form-control @error('stock') is-invalid @enderror" 
-                                   id="stock" 
-                                   name="stock" 
-                                   min="0" 
-                                   value="{{ old('stock', $product->stock) }}"
-                                   readonly>
-                            <small class="form-text text-muted">
-                                Use ajustes de inventario para modificar el stock
-                            </small>
-                            @error('stock')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Stock Mínimo -->
-                        <div class="col-md-6 mb-3">
-                            <label for="min_stock" class="form-label">Stock Mínimo</label>
-                            <input type="number" 
-                                   class="form-control @error('min_stock') is-invalid @enderror" 
-                                   id="min_stock" 
-                                   name="min_stock" 
-                                   min="0" 
-                                   value="{{ old('min_stock', $product->min_stock) }}">
-                            @error('min_stock')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    
-                    <!-- Botones -->
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{{ route('products.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Actualizar Producto
+
+                    <div class="mt-5 text-end">
+                        <button type="submit" class="btn btn-warning px-5 py-2 fw-bold shadow-sm">
+                            <i class="fas fa-sync-alt me-1"></i> Actualizar Producto
                         </button>
                     </div>
                 </form>

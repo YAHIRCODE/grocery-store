@@ -1,129 +1,86 @@
 @extends('layouts.app')
 
-@section('title', 'Productos')
-@section('page-title', 'Gestión de Productos')
-
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="fas fa-box"></i> Lista de Productos
-        </h5>
-        <a href="{{ route('products.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuevo Producto
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 fw-bold">Catálogo de Productos</h1>
+        <a href="{{ route('products.create') }}" class="btn btn-primary shadow-sm">
+            <i class="fas fa-plus me-1"></i> Nuevo Producto
         </a>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Stock Mínimo</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($products as $product)
-                    <tr class="{{ $product->stock <= $product->min_stock ? 'table-warning' : '' }}">
-                        <td><strong>#{{ $product->id }}</strong></td>
-                        <td>
-                            <strong>{{ $product->name }}</strong>
-                            @if($product->barcode)
-                                <br><small class="text-muted">{{ $product->barcode }}</small>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">
-                                {{ $product->category->name ?? '-' }}
-                            </span>
-                        </td>
-                        <td><strong>${{ number_format($product->price, 2) }}</strong></td>
-                        <td>
-                            <strong class="{{ $product->stock <= $product->min_stock ? 'text-danger' : 'text-success' }}">
-                                {{ $product->stock }}
-                            </strong>
-                        </td>
-                        <td>{{ $product->min_stock }}</td>
-                        <td>
-                            @if($product->stock <= 0)
-                                <span class="badge bg-danger">Sin Stock</span>
-                            @elseif($product->stock <= $product->min_stock)
-                                <span class="badge bg-warning">Stock Bajo</span>
-                            @else
-                                <span class="badge bg-success">Disponible</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('products.show', $product->id) }}" 
-                                   class="btn btn-sm btn-info" 
-                                   title="Ver">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('products.edit', $product->id) }}" 
-                                   class="btn btn-sm btn-warning" 
-                                   title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ route('products.destroy', $product->id) }}" 
-                                      method="POST" 
-                                      style="display:inline;"
-                                      onsubmit="return confirm('¿Estás seguro de eliminar este producto?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">
-                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                            <p>No hay productos registrados</p>
-                            <a href="{{ route('products.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Crear Primer Producto
-                            </a>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
-<!-- Resumen de Stock -->
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h6>Productos con Stock Suficiente</h6>
-                <h2>{{ $products->filter(fn($p) => $p->stock > $p->min_stock)->count() }}</h2>
-            </div>
+    @if(session('success'))
+        <div class="alert alert-success border-0 shadow-sm mb-4">
+            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <h6>Productos con Stock Bajo</h6>
-                <h2>{{ $products->filter(fn($p) => $p->stock <= $p->min_stock && $p->stock > 0)->count() }}</h2>
-            </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body">
-                <h6>Productos Sin Stock</h6>
-                <h2>{{ $products->filter(fn($p) => $p->stock == 0)->count() }}</h2>
+    @endif
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small">
+                        <tr>
+                            <th class="ps-4">PRODUCTO</th>
+                            <th>CATEGORÍA</th>
+                            <th>PRECIO</th>
+                            <th>EXISTENCIA</th>
+                            <th class="text-end pe-4">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($products as $product)
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary text-center" style="width: 40px;">
+                                        <i class="fas fa-box"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ $product->name }}</div>
+                                        <small class="text-muted text-truncate d-block" style="max-width: 200px;">{{ $product->description }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-3">
+                                    {{ $product->category->name ?? 'Sin Categoría' }}
+                                </span>
+                            </td>
+                            <td class="fw-bold text-dark">${{ number_format($product->price, 2) }}</td>
+                            <td>
+                                @if($product->stock <= 5)
+                                    <span class="text-danger fw-bold"><i class="fas fa-arrow-down me-1"></i> {{ $product->stock }}</span>
+                                @else
+                                    <span class="text-success fw-bold">{{ $product->stock }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm">
+                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-sm btn-white text-primary"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-white text-warning"><i class="fas fa-edit"></i></a>
+                                    <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-white text-danger" onclick="return confirm('¿Eliminar producto?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No hay productos en el inventario.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

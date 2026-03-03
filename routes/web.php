@@ -46,8 +46,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // ==================== CATEGORÍAS ====================
     // Ver: Todos
-    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+// 1. Primero la ruta de crear
+Route::get('categories/create', [CategoryController::class, 'create'])->name('categories.create');
+
+// 2. Después la ruta con parámetro
+Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+
+// La de index puede ir en cualquier lugar, pero usualmente va al inicio
+Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
     
     // Crear/Editar: Solo Almacenista y Admin
     Route::middleware(['role:Almacenista,Administrador'])->group(function () {

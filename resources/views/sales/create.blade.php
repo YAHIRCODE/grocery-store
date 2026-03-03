@@ -1,157 +1,77 @@
 @extends('layouts.app')
 
-@section('title', 'Nueva Venta')
-@section('page-title', 'Registrar Nueva Venta')
-
 @section('content')
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-shopping-cart"></i> Formulario de Nueva Venta
-                </h5>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('sales.store') }}" method="POST">
-                    @csrf
-                    
-                    <!-- Producto -->
-                    <div class="mb-3">
-                        <label for="product_id" class="form-label">
-                            Producto <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select @error('product_id') is-invalid @enderror" 
-                                id="product_id" 
-                                name="product_id" 
-                                required
-                                onchange="updateProductInfo()">
-                            <option value="">Seleccionar producto</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}" 
-                                        data-price="{{ $product->price }}"
-                                        data-stock="{{ $product->stock }}"
-                                        {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                    {{ $product->name }} - ${{ number_format($product->price, 2) }} (Stock: {{ $product->stock }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('product_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div id="product-info" class="mt-2"></div>
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Cantidad -->
-                        <div class="col-md-6 mb-3">
-                            <label for="quantity" class="form-label">
-                                Cantidad <span class="text-danger">*</span>
-                            </label>
-                            <input type="number" 
-                                   class="form-control @error('quantity') is-invalid @enderror" 
-                                   id="quantity" 
-                                   name="quantity" 
-                                   min="1" 
-                                   value="{{ old('quantity', 1) }}" 
-                                   required
-                                   onchange="calculateTotal()">
-                            @error('quantity')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+<div class="container-fluid">
+    <div class="mb-4 text-muted small">
+        <a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-1"></i> Regresar al historial
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary py-3">
+                    <h5 class="m-0 fw-bold text-white"><i class="fas fa-cart-arrow-down me-2"></i>Nueva Operación de Venta</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ route('sales.store') }}" method="POST" id="saleForm">
+                        @csrf
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold">Buscar Producto (Solo con stock)</label>
+                                <select name="product_id" id="product_id" class="form-select form-select-lg @error('product_id') is-invalid @enderror" required>
+                                    <option value="" selected disabled>Seleccione un producto...</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}" data-price="{{ $product->price }}" data-stock="{{ $product->stock }}">
+                                            {{ $product->name }} — ${{ number_format($product->price, 2) }} (Disp: {{ $product->stock }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Cantidad a Vender</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control form-control-lg" value="1" min="1" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-primary">Total a Cobrar</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white fw-bold">$</span>
+                                    <input type="text" id="total_display" class="form-control form-control-lg fw-bold text-primary bg-light" value="0.00" readonly>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <!-- Cliente (Opcional) -->
-                        <div class="col-md-6 mb-3">
-                            <label for="client_id" class="form-label">Cliente (Opcional)</label>
-                            <select class="form-select @error('client_id') is-invalid @enderror" 
-                                    id="client_id" 
-                                    name="client_id">
-                                <option value="">Cliente general</option>
-                                @foreach(\App\Models\Client::all() as $client)
-                                    <option value="{{ $client->id }}" 
-                                            {{ old('client_id') == $client->id ? 'selected' : '' }}>
-                                        {{ $client->first_name }} {{ $client->last_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('client_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+
+                        <div class="mt-5 pt-3 border-top text-end">
+                            <button type="submit" class="btn btn-success px-5 py-3 fw-bold shadow-sm rounded-pill">
+                                <i class="fas fa-check-circle me-2"></i> COMPLETAR VENTA
+                            </button>
                         </div>
-                    </div>
-                    
-                    <!-- Método de Pago -->
-                    <div class="mb-3">
-                        <label for="payment_method" class="form-label">Método de Pago</label>
-                        <select class="form-select @error('payment_method') is-invalid @enderror" 
-                                id="payment_method" 
-                                name="payment_method">
-                            <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Efectivo</option>
-                            <option value="card" {{ old('payment_method') == 'card' ? 'selected' : '' }}>Tarjeta</option>
-                            <option value="credit" {{ old('payment_method') == 'credit' ? 'selected' : '' }}>Crédito</option>
-                        </select>
-                        @error('payment_method')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <!-- Total a Pagar (Solo lectura) -->
-                    <div class="alert alert-info">
-                        <h5>Total a Pagar: <span id="total-display">$0.00</span></h5>
-                    </div>
-                    
-                    <!-- Botones -->
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{{ route('sales.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-check"></i> Registrar Venta
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-@push('scripts')
 <script>
-function updateProductInfo() {
-    const select = document.getElementById('product_id');
-    const option = select.options[select.selectedIndex];
-    const infoDiv = document.getElementById('product-info');
-    
-    if (option.value) {
-        const price = option.dataset.price;
-        const stock = option.dataset.stock;
-        
-        if (stock <= 0) {
-            infoDiv.innerHTML = '<div class="alert alert-danger">¡Sin stock disponible!</div>';
-        } else if (stock <= 5) {
-            infoDiv.innerHTML = '<div class="alert alert-warning">Stock bajo: ' + stock + ' unidades disponibles</div>';
-        } else {
-            infoDiv.innerHTML = '<div class="alert alert-success">Stock disponible: ' + stock + ' unidades</div>';
-        }
-        
-        calculateTotal();
-    } else {
-        infoDiv.innerHTML = '';
-    }
-}
+    const productSelect = document.getElementById('product_id');
+    const quantityInput = document.getElementById('quantity');
+    const totalDisplay = document.getElementById('total_display');
 
-function calculateTotal() {
-    const select = document.getElementById('product_id');
-    const quantity = document.getElementById('quantity').value;
-    const option = select.options[select.selectedIndex];
-    
-    if (option.value && quantity) {
-        const price = parseFloat(option.dataset.price);
-        const total = price * quantity;
-        document.getElementById('total-display').textContent = '$' + total.toFixed(2);
+    function calculateTotal() {
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const price = parseFloat(selectedOption.getAttribute('data-price'));
+            const quantity = parseInt(quantityInput.value) || 0;
+            const total = price * quantity;
+            totalDisplay.value = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
     }
-}
+
+    productSelect.addEventListener('change', calculateTotal);
+    quantityInput.addEventListener('input', calculateTotal);
 </script>
-@endpush
 @endsection

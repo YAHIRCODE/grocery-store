@@ -1,208 +1,77 @@
 @extends('layouts.app')
 
-@section('title', 'Detalles del Cliente')
-@section('page-title', 'Detalles del Cliente')
-
 @section('content')
-<div class="row">
-    <div class="col-md-10 mx-auto">
-        <!-- Información del Cliente -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-user"></i> {{ $client->first_name }} {{ $client->last_name }}
-                </h5>
-                
-                <div>
-                    <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-warning">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    
-                    @if(auth()->user()->isAdmin())
-                        <form action="{{ route('clients.destroy', $client->id) }}" 
-                              method="POST" 
-                              style="display:inline;"
-                              onsubmit="return confirm('¿Eliminar este cliente?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </form>
-                    @endif
+<div class="container-fluid">
+    <div class="mb-4 d-flex align-items-center justify-content-between">
+        <a href="{{ route('clients.index') }}" class="text-decoration-none small text-muted">
+            <i class="fas fa-arrow-left me-1"></i> Volver
+        </a>
+        <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-sm btn-outline-warning">
+            <i class="fas fa-user-edit me-1"></i> Editar Perfil
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 text-center">
+                <div class="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block mx-auto mb-3 text-primary">
+                    <i class="fas fa-user fa-4x"></i>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">INFORMACIÓN PERSONAL</h6>
-                        <hr>
-                        <p><strong>ID:</strong> #{{ $client->id }}</p>
-                        <p><strong>Nombre Completo:</strong> {{ $client->first_name }} {{ $client->last_name }}</p>
-                        <p><strong>Teléfono:</strong> {{ $client->phone }}</p>
-                        <p><strong>Email:</strong> {{ $client->email ?? 'No registrado' }}</p>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <h6 class="text-muted">DIRECCIÓN</h6>
-                        <hr>
-                        <p><strong>Calle Principal:</strong> {{ $client->street_1 }}</p>
-                        <p><strong>Calle Secundaria:</strong> {{ $client->street_2 ?? '-' }}</p>
-                        <p><strong>Colonia:</strong> {{ $client->neighborhood }}</p>
-                    </div>
-                </div>
-                
+                <h4 class="fw-bold mb-1">{{ $client->first_name }} {{ $client->last_name }}</h4>
+                <p class="text-muted small">ID Cliente: #CLI-{{ str_pad($client->id, 4, '0', STR_PAD_LEFT) }}</p>
                 <hr>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">CRÉDITO</h6>
-                        <hr>
-                        <p><strong>Límite de Crédito:</strong> 
-                            <span class="text-success">${{ number_format($client->credit_limit ?? 0, 2) }}</span>
-                        </p>
-                        <p><strong>Deuda Actual:</strong> 
-                            @php
-                                $debtPending = $client->debts()->whereIn('status', ['pending', 'overdue'])->sum('balance_due');
-                            @endphp
-                            <span class="{{ $debtPending > 0 ? 'text-danger' : 'text-success' }}">
-                                ${{ number_format($debtPending, 2) }}
-                            </span>
-                        </p>
-                        <p><strong>Crédito Disponible:</strong> 
-                            <span class="text-info fw-bold">
-                                ${{ number_format(($client->credit_limit ?? 0) - $debtPending, 2) }}
-                            </span>
-                        </p>
+                <div class="text-start">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Contacto:</small>
+                        <span class="fw-bold small"><i class="fas fa-phone me-2"></i>{{ $client->phone }}</span><br>
+                        <span class="fw-bold small"><i class="fas fa-envelope me-2"></i>{{ $client->email }}</span>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <h6 class="text-muted">ESTADÍSTICAS</h6>
-                        <hr>
-                        <p><strong>Total de Compras:</strong> {{ $client->sales->count() }}</p>
-                        <p><strong>Monto Total Comprado:</strong> 
-                            ${{ number_format($client->sales->sum('total_price'), 2) }}
-                        </p>
-                        <p><strong>Última Compra:</strong> 
-                            {{ $client->sales->sortByDesc('created_at')->first()?->created_at->format('d/m/Y') ?? 'Nunca' }}
-                        </p>
-                    </div>
-                </div>
-                
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <small class="text-muted">
-                            <i class="fas fa-calendar-plus"></i> Registrado: {{ $client->created_at->format('d/m/Y H:i') }}
-                        </small>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <small class="text-muted">
-                            <i class="fas fa-calendar-alt"></i> Actualizado: {{ $client->updated_at->format('d/m/Y H:i') }}
-                        </small>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Ubicación:</small>
+                        <span class="fw-bold small">{{ $client->street_1 }}</span><br>
+                        <span class="small">{{ $client->neighborhood }}</span>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Historial de Compras -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-shopping-cart"></i> Historial de Compras (Últimas 10)
-                </h5>
-            </div>
-            <div class="card-body p-0">
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-hand-holding-usd me-2 text-warning"></i>Historial de Crédito</h5>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                    <table class="table table-sm align-middle">
+                        <thead class="text-muted small">
                             <tr>
-                                <th>Fecha</th>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Total</th>
-                                <th>Pago</th>
+                                <th>FECHA</th>
+                                <th>MONTO</th>
+                                <th>ESTADO</th>
+                                <th>TOTAL PAGADO</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($client->sales()->latest()->take(10)->get() as $sale)
+                            @forelse($client->debts as $debt)
                             <tr>
-                                <td>{{ $sale->created_at->format('d/m/Y H:i') }}</td>
-                                <td>{{ $sale->product->name ?? 'N/A' }}</td>
-                                <td>{{ $sale->quantity }}</td>
-                                <td>${{ number_format($sale->total_price, 2) }}</td>
+                                <td>{{ \Carbon\Carbon::parse($debt->start_date)->format('d/m/Y') }}</td>
+                                <td class="fw-bold text-dark">${{ number_format($debt->balance_due, 2) }}</td>
                                 <td>
-                                    @if($sale->payment_method === 'cash')
-                                        <span class="badge bg-success">Efectivo</span>
-                                    @elseif($sale->payment_method === 'card')
-                                        <span class="badge bg-info">Tarjeta</span>
-                                    @else
-                                        <span class="badge bg-warning">Crédito</span>
-                                    @endif
+                                    @php
+                                        $color = $debt->status == 'paid' ? 'success' : ($debt->status == 'overdue' ? 'danger' : 'warning');
+                                    @endphp
+                                    <span class="badge rounded-pill bg-{{ $color }} bg-opacity-10 text-{{ $color }} px-3">
+                                        {{ strtoupper($debt->status) }}
+                                    </span>
                                 </td>
+                                <td>${{ $debt->status == 'paid' ? number_format($debt->balance_due, 2) : '0.00' }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center py-3 text-muted">
-                                    No hay compras registradas
-                                </td>
+                                <td colspan="4" class="text-center py-4 text-muted small">Este cliente no tiene historial de deudas.</td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
-        
-        <!-- Deudas Pendientes -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-credit-card"></i> Deudas Pendientes
-                </h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Fecha Inicio</th>
-                                <th>Fecha Vencimiento</th>
-                                <th>Monto</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($client->debts()->whereIn('status', ['pending', 'overdue'])->get() as $debt)
-                            <tr>
-                                <td>{{ $debt->start_date->format('d/m/Y') }}</td>
-                                <td>{{ $debt->due_date->format('d/m/Y') }}</td>
-                                <td>${{ number_format($debt->balance_due, 2) }}</td>
-                                <td>
-                                    @if($debt->status === 'pending')
-                                        <span class="badge bg-warning">Pendiente</span>
-                                    @else
-                                        <span class="badge bg-danger">Vencida</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-3 text-success">
-                                    <i class="fas fa-check-circle"></i> Sin deudas pendientes
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mt-3">
-            <a href="{{ route('clients.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver al Listado
-            </a>
         </div>
     </div>
 </div>
