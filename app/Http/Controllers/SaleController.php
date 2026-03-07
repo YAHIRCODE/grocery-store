@@ -16,7 +16,7 @@ class SaleController extends Controller
      */
     public function index()
     {
-        $sales = Sale::with(['product', 'employee'])->orderBy('created_at', 'desc')->get();
+        $sales = Sale::with(['product', 'employee', 'client'])->orderBy('created_at', 'desc')->get();
         return view('sales.index', compact('sales'));
     }
 
@@ -68,6 +68,8 @@ class SaleController extends Controller
                 'quantity' => $validated['quantity'],
                 'total_price' => $total,
                 'employee_id' => $employee->id,
+                'client_id' => auth()->id(), // Asociar con el cliente autenticado
+                'status' => 'completed', // Establecer el estado inicial de la venta
             ]);
 
             // Descontar el stock del producto
@@ -95,7 +97,7 @@ class SaleController extends Controller
      */
     public function show(string $id)
     {
-        $sale = Sale::with(['product', 'employee'])->findOrFail($id);
+        $sale = Sale::with(['product', 'employee', 'client'])->findOrFail($id);
         return view('sales.show', compact('sale'));
     }
 
@@ -160,6 +162,92 @@ class SaleController extends Controller
                 ->withInput();
         }
     }
+// se agrgan don dunciones en la cula se pueden cancelar la venta y revertir la cancelacion de la venta
+
+ public function cancel(string $id)
+    {
+        $sale = Sale::findOrFail($id);
+        
+        // Verificar si ya está cancelada
+        if ($sale->isCancelled()) {
+            return redirect()
+                ->back()
+                ->with('warning', 'Esta venta ya está cancelada');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Cancelar venta (devuelve stock automáticamente)
+            if ($sale->cancel()) {
+                DB::commit();
+                Log::info('Venta cancelada: ' . $sale->id);
+                
+                return redirect()
+                    ->route('sales.index')
+                    ->with('success', 'Venta cancelada exitosamente. Stock devuelto al inventario.');
+            } else {
+                DB::rollBack();
+                return redirect()
+                    ->back()
+                    ->with('error', 'No se pudo cancelar la venta');
+            }
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al cancelar venta: ' . $e->getMessage());
+            
+            return redirect()
+                ->back()
+                ->with('error', 'Error al cancelar la venta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * REVERTIR CANCELACIÓN (opcional)
+     */
+    public function revert(string $id)
+    {
+        // Solo administradores pueden revertir
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'No tienes permisos para revertir ventas canceladas');
+        }
+
+        $sale = Sale::findOrFail($id);
+        
+        if (!$sale->isCancelled()) {
+            return redirect()
+                ->back()
+                ->with('warning', 'Esta venta no está cancelada');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Revertir cancelación
+            if ($sale->revert()) {
+                DB::commit();
+                Log::info('Venta revertida: ' . $sale->id);
+                
+                return redirect()
+                    ->route('sales.index')
+                    ->with('success', 'Venta revertida exitosamente. Stock ajustado.');
+            } else {
+                DB::rollBack();
+                return redirect()
+                    ->back()
+                    ->with('error', 'No hay stock suficiente para revertir la cancelación');
+            }
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al revertir venta: ' . $e->getMessage());
+            
+            return redirect()
+                ->back()
+                ->with('error', 'Error al revertir la venta: ' . $e->getMessage());
+        }
+    }
+
+
 
     /**
      * Remove the specified resource from storage.

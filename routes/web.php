@@ -94,7 +94,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Solo Cajero y Admin
     Route::middleware(['role:Cajero,Administrador'])->group(function () {
         Route::resource('sales', SaleController::class);
+         // Rutas de cancelación
+    Route::post('/sales/{id}/cancel', [SaleController::class, 'cancel'])
+        ->name('sales.cancel');
+    
+    // Solo admin puede revertir (opcional)
+    Route::post('/sales/{id}/revert', [SaleController::class, 'revert'])
+        ->name('sales.revert')
+        ->middleware('role:Administrador');
     });
+
+    // routes/web.php
 
     // ==================== CLIENTES ====================
     // Solo Cajero y Admin

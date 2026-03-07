@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+     use SoftDeletes; // ← AGREGAR
     protected $fillable = [
         'category_id',
         'supplier_id',
