@@ -86,8 +86,8 @@
                                     <form action="{{ route('sales.revert', $sale->id) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-white text-warning border-end" 
-                                                title="Devolución al Inventario" 
-                                                onclick="return confirm('¿Confirmar que el producto regresa al inventario?')">
+                                                title="revertir la cancelacion de la venta " 
+                                                onclick="return confirm('¿Seguro que deseas revertir la cancelación de esta venta?')">
                                             <i class="fas fa-exchange-alt"></i>
                                         </button>
                                     </form>
@@ -95,7 +95,7 @@
                                     <form action="{{ route('sales.cancel', $sale->id) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-white text-danger" 
-                                                title="Cancelar Venta Permanentemente" 
+                                                title="Devolucion del producto al inventario" 
                                                 onclick="return confirm('¿Seguro que deseas cancelar esta venta? Esta acción no se puede deshacer.')">
                                             <i class="fas fa-ban"></i>
                                         </button>

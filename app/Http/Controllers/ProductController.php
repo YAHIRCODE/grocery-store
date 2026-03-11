@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -44,7 +45,7 @@ class ProductController extends Controller
         $validated['stock'] = $validated['stock'] ?? 0;
 
         Product::create($validated);
-        
+
         return redirect()
             ->route('products.index')
             ->with('success', 'Producto creado exitosamente');
@@ -75,7 +76,7 @@ class ProductController extends Controller
     public function update(Request $request, string $id)
     {
         $product = Product::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:1000',
@@ -86,7 +87,7 @@ class ProductController extends Controller
         ]);
 
         $product->update($validated);
-        
+
         return redirect()
             ->route('products.index')
             ->with('success', 'Producto actualizado exitosamente');
@@ -95,21 +96,102 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
+ public function destroy(string $id)
+{
+    try {
         $product = Product::findOrFail($id);
+
+        Log::info('=== INICIO DESTROY ===');
+        Log::info('Producto encontrado', [
+            'id' => $product->id,
+            'name' => $product->name,
+            'deleted_at' => $product->deleted_at,
+        ]);
         
-        // Verificar si el producto tiene ventas asociadas
-        if ($product->sales()->exists()) {
+        // Verificar si tiene ventas
+        $ventasCount = $product->sales()->count();
+        Log::info('Ventas encontradas', ['count' => $ventasCount]);
+        
+        if ($ventasCount > 0) {
+            Log::warning('BLOQUEADO: Tiene ventas');
             return redirect()
                 ->back()
-                ->with('error', 'No se puede eliminar el producto porque tiene ventas registradas');
+                ->with('warning', "No se puede eliminar: tiene {$ventasCount} ventas.");
         }
-        
-        $product->delete();
-        
+
+        // ELIMINAR
+        Log::info('Ejecutando delete()...');
+        $result = $product->delete();
+        Log::info('Resultado de delete()', ['result' => $result]);
+
+        // Verificar después
+        $product->refresh();
+        Log::info('DESPUÉS DE ELIMINAR', [
+            'id' => $product->id,
+            'name' => $product->name,
+            'deleted_at' => $product->deleted_at,
+        ]);
+
+        Log::info('=== FIN DESTROY ===');
+
         return redirect()
             ->route('products.index')
-            ->with('success', 'Producto eliminado exitosamente');
+            ->with('success', 'Producto eliminado correctamente');
+            
+    } catch (\Exception $e) {
+        Log::error('ERROR EN DESTROY', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+        
+        return redirect()
+            ->back()
+            ->with('error', 'Error al eliminar: ' . $e->getMessage());
+    }
+}
+    public function trashed()
+    {
+        $products = Product::onlyTrashed()
+            ->with('category')
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return view('products.trashed', compact('products'));
+    }
+    // este es para restaurar un producto eliminado
+    public function restore(string $id)
+    {
+        $product = Product::onlyTrashed()->findOrFail($id);
+        $product->restore();
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Producto restaurado exitosamente');
+    }
+
+    //este solo es borrar pernamente si es que el producto deja de existir 
+    public function forceDelete(string $id)
+    {
+        // Solo administradores pueden eliminar permanentemente
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'No tienes permisos para eliminar permanentemente productos');
+        }
+
+        $product = Product::onlyTrashed()->findOrFail($id);
+
+        // Verificar que no tenga ventas
+        if ($product->sales()->count() > 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'No se puede eliminar permanentemente porque tiene ventas registradas.');
+        }
+
+        // Eliminar PERMANENTEMENTE (se borra de la BD)
+        $product->forceDelete();
+
+        return redirect()
+            ->route('products.trashed')
+            ->with('success', 'Producto eliminado permanentemente de la base de datos');
     }
 }

@@ -12,8 +12,8 @@
     <style>
         :root {
             --primary-dark: #0f172a;
-            --accent-color: #6366f1; /* Indigo */
-            --highlight-color: #fbbf24; /* Amber para máxima visibilidad */
+            --accent-color: #6366f1;
+            --highlight-color: #fbbf24;
         }
 
         body {
@@ -23,7 +23,6 @@
             margin: 0;
         }
 
-        /* Carrusel Fullscreen */
         .carousel-item {
             height: 100vh;
             min-height: 700px;
@@ -37,23 +36,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.7); /* Capa oscura para legibilidad */
+            background: rgba(15, 23, 42, 0.7);
             display: flex;
             align-items: center;
             z-index: 2;
         }
 
-        /* Títulos y Animación */
         .hero-title {
             font-size: 5rem;
             font-weight: 800;
             margin-bottom: 1rem;
         }
 
-        /* Subtítulo con color llamativo y animación de cursor */
         .typing-text {
             font-size: 1.8rem;
-            color: var(--highlight-color); /* Color ámbar para que no se pierda */
+            color: var(--highlight-color);
             font-weight: 700;
             border-right: 3px solid var(--highlight-color);
             white-space: nowrap;
@@ -62,25 +59,23 @@
             animation: typing 4s steps(50) infinite, blink 0.5s step-end infinite;
         }
 
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink { from, to { border-color: transparent } 50% { border-color: var(--highlight-color) } }
 
-        @keyframes blink {
-            from, to { border-color: transparent }
-            50% { border-color: var(--highlight-color) }
-        }
-
-        /* Video Container */
         .video-box {
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             border: 2px solid rgba(255,255,255,0.1);
+            background: #000;
         }
 
-        /* Botón Principal */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .btn-main {
             background: var(--accent-color);
             color: white;
@@ -91,6 +86,8 @@
             transition: all 0.3s ease;
             border: none;
             margin-top: 2rem;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-main:hover {
@@ -100,7 +97,6 @@
             box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5);
         }
 
-        /* Sección de Características (Abajo del carrusel) */
         .features-section {
             padding: 100px 0;
             background: #1e293b;
@@ -129,11 +125,29 @@
 </head>
 <body>
 
+    {{-- 1. CONSULTA DE IMÁGENES --}}
+    @php
+        $carouselImages = \App\Models\MediaContent::where('section', 'carousel')
+            ->where('file_type', 'image')
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    @endphp
+
     <div id="homeCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
         <div class="carousel-inner">
-            <div class="carousel-item active" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920')"></div>
-            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1920')"></div>
-            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=1920')"></div>
+            @if($carouselImages->count() > 0)
+                @foreach($carouselImages as $index => $image)
+                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" 
+                         data-bs-interval="10000" 
+                         style="background-image: url('{{ asset($image->file_path) }}')">
+                    </div>
+                @endforeach
+            @else
+                {{-- Respaldo --}}
+                <div class="carousel-item active" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920')"></div>
+                <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1920')"></div>
+            @endif
         </div>
 
         <div class="carousel-overlay">
@@ -143,7 +157,7 @@
                         <h1 class="hero-title">GROCERY <span style="color: var(--accent-color)">STORE</span></h1>
                         
                         <div class="typing-container">
-                            <span class="typing-text">Gestión de inventarios y .</span>
+                            <span class="typing-text">Gestión de inventarios y ventas</span>
                         </div>
                         
                         <div class="mt-4">
@@ -160,21 +174,47 @@
                     </div>
 
                     <div class="col-lg-5 d-none d-lg-block">
-                        <div class="video-box">
-                            <div class="ratio ratio-16x9">
-                                <iframe src="https://www.youtube.com/watch?v=mfJhMfOPWdE&list=RDgb1uXeEkusE&index=7" title="Video" allowfullscreen></iframe>
+                        {{-- 2. CONSULTA DE VIDEO --}}
+                        @php
+                            $heroVideo = \App\Models\MediaContent::where('section', 'hero_video')
+                                ->where('file_type', 'video')
+                                ->where('is_active', true)
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+                        @endphp
+
+                        <div class="video-box shadow-lg">
+                            <div class="ratio ratio-16x9 bg-black">
+                                @if($heroVideo)
+                                    <video autoplay muted loop playsinline poster="">
+                                        <source src="{{ asset($heroVideo->file_path) }}" type="video/mp4">
+                                        Tu navegador no soporta video MP4.
+                                    </video>
+                                @else
+                                    {{-- Video de respaldo si no hay nada en la BD --}}
+                                    <iframe src="https://www.youtube.com/embed/mfJhMfOPWdE?autoplay=1&mute=1&loop=1" title="Video Respaldo" allowfullscreen></iframe>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        {{-- Indicadores Dinámicos --}}
+        @if($carouselImages->count() > 1)
+            <div class="carousel-indicators">
+                @foreach($carouselImages as $index => $image)
+                    <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}"></button>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <section class="features-section">
         <div class="container text-center">
             <h2 class="fw-bold mb-5 display-5">¿Qué ofrecemos?</h2>
-            <div class="row g-4">
+            <div class="row g-4 text-start">
                 <div class="col-md-3">
                     <div class="feature-card">
                         <i class="fas fa-boxes"></i>

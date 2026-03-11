@@ -4,9 +4,16 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800 fw-bold">Catálogo de Productos</h1>
-        <a href="{{ route('products.create') }}" class="btn btn-primary shadow-sm">
-            <i class="fas fa-plus me-1"></i> Nuevo Producto
-        </a>
+        
+        <div class="d-flex gap-2">
+            <a href="{{ route('products.trashed') }}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fas fa-trash-restore me-1"></i> Ver Eliminados
+            </a>
+
+            <a href="{{ route('products.create') }}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-plus me-1"></i> Nuevo Producto
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -54,11 +61,17 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group shadow-sm">
-                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-sm btn-white text-primary"><i class="fas fa-eye"></i></a>
-                                    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-white text-warning"><i class="fas fa-edit"></i></a>
+                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-sm btn-white text-primary" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-white text-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
                                     <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="d-inline">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-white text-danger" onclick="return confirm('¿Eliminar producto?')">
+                                        <button type="submit" class="btn btn-sm btn-white text-danger" title="Eliminar" onclick="return confirm('¿Enviar producto a la papelera?')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -66,7 +79,9 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="7" class="text-center py-5 text-muted">No hay productos registrados.</td></tr>
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">No hay productos registrados.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>

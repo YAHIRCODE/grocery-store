@@ -12,8 +12,8 @@
     <style>
         :root {
             --primary-dark: #0f172a;
-            --accent-color: #6366f1; /* Indigo */
-            --highlight-color: #fbbf24; /* Amber para máxima visibilidad */
+            --accent-color: #6366f1;
+            --highlight-color: #fbbf24;
         }
 
         body {
@@ -23,7 +23,6 @@
             margin: 0;
         }
 
-        /* Carrusel Fullscreen */
         .carousel-item {
             height: 100vh;
             min-height: 700px;
@@ -37,23 +36,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.7); /* Capa oscura para legibilidad */
+            background: rgba(15, 23, 42, 0.7);
             display: flex;
             align-items: center;
             z-index: 2;
         }
 
-        /* Títulos y Animación */
         .hero-title {
             font-size: 5rem;
             font-weight: 800;
             margin-bottom: 1rem;
         }
 
-        /* Subtítulo con color llamativo y animación de cursor */
         .typing-text {
             font-size: 1.8rem;
-            color: var(--highlight-color); /* Color ámbar para que no se pierda */
+            color: var(--highlight-color);
             font-weight: 700;
             border-right: 3px solid var(--highlight-color);
             white-space: nowrap;
@@ -62,25 +59,17 @@
             animation: typing 4s steps(50) infinite, blink 0.5s step-end infinite;
         }
 
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink { from, to { border-color: transparent } 50% { border-color: var(--highlight-color) } }
 
-        @keyframes blink {
-            from, to { border-color: transparent }
-            50% { border-color: var(--highlight-color) }
-        }
-
-        /* Video Container */
         .video-box {
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             border: 2px solid rgba(255,255,255,0.1);
+            background: #000;
         }
 
-        /* Botón Principal */
         .btn-main {
             background: var(--accent-color);
             color: white;
@@ -91,6 +80,8 @@
             transition: all 0.3s ease;
             border: none;
             margin-top: 2rem;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-main:hover {
@@ -100,7 +91,6 @@
             box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5);
         }
 
-        /* Sección de Características (Abajo del carrusel) */
         .features-section {
             padding: 100px 0;
             background: #1e293b;
@@ -129,11 +119,23 @@
 </head>
 <body>
 
+    @php
+        $carouselImages = \App\Models\MediaContent::where('section', 'carousel')
+            ->where('file_type', 'image')
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    @endphp
+
     <div id="homeCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
         <div class="carousel-inner">
-            <div class="carousel-item active" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920')"></div>
-            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1920')"></div>
-            <div class="carousel-item" data-bs-interval="10000" style="background-image: url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=1920')"></div>
+            @forelse($carouselImages as $index => $image)
+                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" 
+                     style="background-image: url('{{ asset($image->file_path) }}')">
+                </div>
+            @empty
+                <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920')"></div>
+            @endforelse
         </div>
 
         <div class="carousel-overlay">
@@ -143,15 +145,31 @@
                         <h1 class="hero-title">GROCERY <span style="color: var(--accent-color)">STORE</span></h1>
                         
                         <div class="typing-container">
-                            <span class="typing-text">Gestión de inventarios y .</span>
+                            <span class="typing-text">Gestión de inventarios y ventas.</span>
                         </div>
                         
                         <div class="mt-4">
                             @auth
-                                <a href="{{ route('dashboard') }}" class="btn btn-main shadow">
-                                    <i class="fas fa-th-large me-2"></i> IR AL DASHBOARD
-                                </a>
+                                {{-- LÓGICA DE ROLES PARA USUARIOS AUTENTICADOS --}}
+                                @if(Auth::user()->hasRole('Administrador'))
+                                    <a href="{{ route('dashboard') }}" class="btn btn-main shadow">
+                                        <i class="fas fa-chart-line me-2"></i> IR AL DASHBOARD
+                                    </a>
+                                @elseif(Auth::user()->hasRole('Almacenista'))
+                                    <a href="{{ route('products.index') }}" class="btn btn-main shadow">
+                                        <i class="fas fa-boxes me-2"></i> GESTIONAR INVENTARIO
+                                    </a>
+                                @elseif(Auth::user()->hasRole('Cajero'))
+                                    <a href="{{ route('sales.create') }}" class="btn btn-main shadow">
+                                        <i class="fas fa-cash-register me-2"></i> PUNTO DE VENTA
+                                    </a>
+                                @else
+                                    <a href="{{ route('home') }}" class="btn btn-main shadow">
+                                        <i class="fas fa-home me-2"></i> ENTRAR AL SISTEMA
+                                    </a>
+                                @endif
                             @else
+                                {{-- BOTÓN PARA INVITADOS --}}
                                 <a href="{{ route('login') }}" class="btn btn-main shadow">
                                     <i class="fas fa-sign-in-alt me-2"></i> INICIAR SESIÓN
                                 </a>
@@ -160,9 +178,25 @@
                     </div>
 
                     <div class="col-lg-5 d-none d-lg-block">
+                        @php
+                            $heroVideo = \App\Models\MediaContent::where('section', 'hero_video')
+                                ->where('file_type', 'video')
+                                ->where('is_active', true)
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+                        @endphp
+
                         <div class="video-box">
                             <div class="ratio ratio-16x9">
-                                <iframe src="https://www.youtube.com/watch?v=mfJhMfOPWdE&list=RDgb1uXeEkusE&index=7" title="Video" allowfullscreen></iframe>
+                                @if($heroVideo)
+                                    <video autoplay muted loop playsinline>
+                                        <source src="{{ asset($heroVideo->file_path) }}" type="video/mp4">
+                                    </video>
+                                @else
+                                    <div class="d-flex align-items-center justify-content-center bg-dark text-muted">
+                                        <p>Grocery Store Management</p>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -173,34 +207,35 @@
 
     <section class="features-section">
         <div class="container text-center">
-            <h2 class="fw-bold mb-5 display-5">¿Qué ofrecemos?</h2>
+            <h2 class="fw-bold mb-5 display-5">Módulos del Sistema</h2>
             <div class="row g-4">
+                {{-- Los cards pueden ser visibles para todos o filtrarlos también --}}
                 <div class="col-md-3">
                     <div class="feature-card">
                         <i class="fas fa-boxes"></i>
                         <h4>Inventario</h4>
-                        <p class="text-white-50 small">Control total de stock y ajustes automatizados.</p>
+                        <p class="text-white-50 small">Control de stock y mermas.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <i class="fas fa-cash-register"></i>
                         <h4>Ventas</h4>
-                        <p class="text-white-50 small">Registro rápido de transacciones y cálculo de totales.</p>
+                        <p class="text-white-50 small">Transacciones en tiempo real.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <i class="fas fa-users-cog"></i>
-                        <h4>Recursos Humanos</h4>
-                        <p class="text-white-50 small">Gestión de empleados, roles y acceso seguro.</p>
+                        <h4>Personal</h4>
+                        <p class="text-white-50 small">Gestión de roles y equipo.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <h4>Finanzas</h4>
-                        <p class="text-white-50 small">Administración de deudas de proveedores y clientes.</p>
+                        <p class="text-white-50 small">Deudas y proveedores.</p>
                     </div>
                 </div>
             </div>

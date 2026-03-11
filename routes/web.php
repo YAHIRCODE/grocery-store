@@ -69,10 +69,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ==================== PRODUCTOS ====================
     // Solo Almacenista y Admin
-    Route::middleware(['role:Almacenista,Administrador'])->group(function () {
-        Route::resource('products', ProductController::class);
-    });
+ Route::middleware(['role:Almacenista,Administrador'])->group(function () {
+    Route::resource('products', ProductController::class);
+    
+    // Papelera
+    Route::get('/products-trashed', [ProductController::class, 'trashed'])
+        ->name('products.trashed');
+    
+    // Restaurar producto
+    Route::post('/products/{id}/restore', [ProductController::class, 'restore'])
+        ->name('products.restore');
+    
+    // Eliminar permanentemente (solo admin)
+    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])
+        ->name('products.force-delete')
+        ->middleware('role:Administrador');
+});
 
+
+
+
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
+    Route::prefix('media')->name('media.')->group(function () {
+        Route::get('/', [MediaController::class, 'index'])->name('index');
+        Route::post('/', [MediaController::class, 'store'])->name('store');
+        Route::post('/{id}/toggle', [MediaController::class, 'toggleActive'])->name('toggle');
+        Route::delete('/{id}', [MediaController::class, 'destroy'])->name('destroy');
+    });
+});
     // ==================== PROVEEDORES ====================
     // Solo Almacenista y Admin
     Route::middleware(['role:Almacenista,Administrador'])->group(function () {

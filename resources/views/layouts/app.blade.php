@@ -156,7 +156,7 @@
                         <i class="fas fa-box"></i> Productos
                     </a>
                     <a href="{{ route('inventory_adjustments.index') }}" class="nav-link-custom {{ request()->routeIs('inventory_adjustments.*') ? 'active' : '' }}">
-                        <i class="fas fa-adjust"></i> Ajustes Stock
+                        <i class="fas fa-adjust"></i> Mermas del Producto
                     </a>
                 @endif
 
@@ -175,6 +175,7 @@
                         <i class="fas fa-hand-holding-dollar"></i> Cobros Clientes
                     </a>
                 @endif
+                
 
                 @if(Auth::user()->isAdmin())
                     <div class="menu-section">Administración</div>
@@ -187,7 +188,12 @@
                     <a href="{{ route('supplier_debts.index') }}" class="nav-link-custom {{ request()->routeIs('supplier_debts.*') ? 'active' : '' }}">
                         <i class="fas fa-file-invoice-dollar"></i> Deudas Proveedores
                     </a>
+                    <div class="menu-section">Sitio Web</div>
+                    <a href="{{ route('media.index') }}" class="nav-link-custom {{ request()->routeIs('media.*') ? 'active' : '' }}">
+                        <i class="fas fa-photo-video"></i> Multimedia / Banner
+                    </a>
                 @endif
+                
             </div>
         </div>
         @endauth

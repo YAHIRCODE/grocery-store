@@ -133,10 +133,22 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
         
-        // Opcional: Eliminar también el usuario asociado
-        if ($employee->user_id) {
-            User::find($employee->user_id)?->delete();
-        }
+            $ventasCount = $employee->sales()->count();
+    if ($ventasCount > 0) {
+        return redirect()
+            ->back()
+            ->with('warning', "No se puede eliminar este empleado porque tiene {$ventasCount} venta(s) registrada(s).");
+    }
+        $ventasCount = $employee->sales()->count();
+    if ($ventasCount > 0) {
+        return redirect()
+            ->back()
+            ->with('warning', "No se puede eliminar este empleado porque tiene {$ventasCount} venta(s) registrada(s).");
+    }
+        // // Opcional: Eliminar también el usuario asociado
+        // if ($employee->user_id) {
+        //     User::find($employee->user_id)?->delete();
+        // }
         
         $employee->delete();
         

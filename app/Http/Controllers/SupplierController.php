@@ -89,6 +89,7 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::findOrFail($id);
         
+        
         // Verificar si el proveedor tiene deudas pendientes
         if ($supplier->debts()->whereIn('status', ['pending', 'overdue'])->exists()) {
             return redirect()
