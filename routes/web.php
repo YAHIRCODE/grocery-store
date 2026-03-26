@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PdfController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\StockNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -171,7 +172,19 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
         Route::middleware(['role:Cajero,Administrador'])->group(function () {
             Route::get('/cliente/{id}', [PdfController::class, 'reporteCliente'])->name('cliente');
         });
+
+        // Notificaciones de Stock
     });
+
+    Route::middleware(['auth'])->group(function () {
+    // Si tu middleware de rol se llama 'role', asegúrate que esté registrado. 
+    // Si te da error, intenta quitar el 'role:Administrador' solo para probar.
+    Route::get('/admin/low-stock', [StockNotificationController::class, 'showLowStockProducts'])
+        ->name('stock.low-stock');
+    
+    Route::post('/admin/send-stock-notification', [StockNotificationController::class, 'sendLowStockNotification'])
+        ->name('stock.send-notification');
+});
 
     // ==================== REPORTES HTML ====================
     // Solo Administrador

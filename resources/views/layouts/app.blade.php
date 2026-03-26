@@ -192,6 +192,9 @@
                     <a href="{{ route('media.index') }}" class="nav-link-custom {{ request()->routeIs('media.*') ? 'active' : '' }}">
                         <i class="fas fa-photo-video"></i> Multimedia / Banner
                     </a>
+                    <a href="{{ route('stock.low-stock') }}" class="nav-link-custom {{ request()->routeIs('stock.low-stock') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle"></i> Notificaciones de Stock
+                    </a>
                 @endif
                 
             </div>
