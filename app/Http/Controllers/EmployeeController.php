@@ -124,6 +124,7 @@ class EmployeeController extends Controller
         return redirect()
             ->route('employees.index')
             ->with('success', 'Empleado actualizado exitosamente');
+            
     }
 
     /**
@@ -134,12 +135,6 @@ class EmployeeController extends Controller
         $employee = Employee::findOrFail($id);
         
             $ventasCount = $employee->sales()->count();
-    if ($ventasCount > 0) {
-        return redirect()
-            ->back()
-            ->with('warning', "No se puede eliminar este empleado porque tiene {$ventasCount} venta(s) registrada(s).");
-    }
-        $ventasCount = $employee->sales()->count();
     if ($ventasCount > 0) {
         return redirect()
             ->back()

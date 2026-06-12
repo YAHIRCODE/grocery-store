@@ -18,7 +18,7 @@ public function handle(Request $request, Closure $next, ...$roles): Response
     {
         // 1. Verificamos si el usuario inició sesión
         if (!Auth::check()) {
-            return redirect('login');
+        return response()->json(['message' => 'No autenticado'], 401);
         }
 $user = Auth::user();
 
@@ -36,6 +36,6 @@ if ($user) {
     }
 
         // 4. Si no tiene permiso, lo mandamos afuera con un error 403
-        abort(403, 'No tienes permiso para acceder a esta sección.');
+        return response()->json(['message' => 'No autorizado'], 403);
     }
 }
