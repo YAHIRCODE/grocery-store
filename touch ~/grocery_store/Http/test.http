@@ -1,0 +1,26 @@
+@baseUrl = http://127.0.0.1:8000/api
+@token = your_jwt_token_here
+
+### Health check
+GET {{baseUrl}}/test
+Accept: application/json
+
+### User login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+    "email": "yahir@gmail.com",
+    "password": "12345"
+}
+
+
+### Get authenticated user info
+GET {{baseUrl}}/productos
+Accept: application/json
+Authorization: Bearer 3|FwUsQ9pF8UTMzRGAtWwrmMrgXXyrklT1xYyWfIOl528b6f6a
+### Get authenticated user info
+GET {{baseUrl}}/me
+Accept: application/json
+Authorization: Bearer 3|FwUsQ9pF8UTMzRGAtWwrmMrgXXyrklT1xYyWfIOl528b6f6a
+
